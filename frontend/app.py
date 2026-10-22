@@ -19,6 +19,7 @@ common.apply_style()
 pages = [
     st.Page("views/home.py", title="Overview", icon=":material/home:", default=True),
     st.Page("views/detect.py", title="Landmark Detection", icon=":material/center_focus_strong:"),
+    st.Page("views/live.py", title="Live Camera", icon=":material/videocam:"),
     st.Page("views/comparison.py", title="Model Comparison", icon=":material/leaderboard:"),
     st.Page("views/robustness.py", title="Robustness Analysis", icon=":material/insights:"),
     st.Page("views/about.py", title="About", icon=":material/info:"),

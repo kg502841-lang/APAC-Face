@@ -187,6 +187,7 @@ APAC-Face/
 │   ├── evaluate.py          WFLW test evaluation, tables and figures
 │   ├── apac_eval.py         per-group consistency (and accuracy, given annotations)
 │   ├── inference.py         face detection, crop, predict, refine; CLI
+│   ├── live.py              webcam / video mode with frame-to-frame face tracking
 │   ├── plotting.py          report figures
 │   └── utils.py             config, seeding, device, JSON helpers
 ├── backend/main.py          FastAPI service
@@ -286,14 +287,34 @@ uvicorn backend.main:app --host 127.0.0.1 --port 8000
 streamlit run frontend/app.py
 ```
 
-On Windows, `scripts\run_app.ps1` starts both. The dashboard opens at http://localhost:8501 with five pages:
-Overview, Landmark Detection (upload, overlay, download), Model Comparison, Robustness Analysis and About.
+On Windows, `scripts\run_app.ps1` starts both. The dashboard opens at http://localhost:8501 with six pages:
+Overview, Landmark Detection (upload, overlay, download), Live Camera, Model Comparison, Robustness Analysis
+and About.
 
 Single-image command line:
 
 ```bash
 python -m src.inference --image face.jpg --model proposed --out results/predictions/face.png
 ```
+
+### Live webcam detection
+
+```bash
+python -m src.inference --webcam                                  # q / Esc quit, m toggle mesh, s snapshot
+python -m src.inference --webcam --camera 1 --record demo.mp4     # another camera, save the annotated video
+python -m src.inference --video clip.mp4 --headless --record out.mp4
+```
+
+The dashboard's **Live Camera** page has the same live view: it streams the webcam of the computer running
+the dashboard. Its **Snapshot** tab instead takes a photo with the browser's camera, after you opt in.
+
+Live mode (`src/live.py`) does not run the face detector on every frame. After the first detection, each
+frame is cropped around the previous frame's landmarks, which is the same crop convention the model was
+trained on. The Haar detector re-checks every 15 frames: it re-seeds the track if the face moved elsewhere,
+and drops it after two consecutive misses. Landmarks are smoothed with an exponential moving average
+(`live.smoothing`). On a synthetic 640x480 motion clip (an APAC face panning, zooming and rotating),
+the proposed model tracked the face in 90/90 frames at about 64 FPS (9 ms model time per frame, RTX 4050,
+no display). Settings live under `live:` in `config.yaml`.
 
 ## API
 
@@ -337,7 +358,8 @@ pytest -q
 ```
 
 The suite covers the annotation parser, the train/val split, the flip permutation, image/landmark consistency
-under augmentation, the metrics, the model and checkpoints, inference, and the API.
+under augmentation, the metrics, the model and checkpoints, inference, the API, and live-mode tracking
+(detect, track, re-seed, drop, headless video recording).
 
 ## Limitations
 

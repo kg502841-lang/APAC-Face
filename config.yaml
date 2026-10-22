@@ -83,6 +83,15 @@ inference:
                               # Tuned on WFLW val (detector boxes): 0 -> 5.98%, 1 -> 5.27%, 2 -> 5.11%, 3 -> 5.03% NME
   max_upload_mb: 10
 
+live:                         # webcam mode: python -m src.inference --webcam, dashboard "Live Camera"
+  camera_index: 0
+  width: 640
+  height: 480
+  mirror: true                # selfie view
+  redetect_every: 15          # frames between face-detector checks while tracking
+  max_missed_detections: 2    # consecutive detector misses before the track is dropped
+  smoothing: 0.4              # weight of the previous frame's landmarks (0 = off); higher = steadier, laggier
+
 apac:
   per_group: 300              # images sampled per demographic group
   jitter_samples: 4           # perturbed crops per image for the stability metric

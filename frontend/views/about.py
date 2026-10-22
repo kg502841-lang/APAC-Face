@@ -36,6 +36,8 @@ with right:
 <li>Inference: OpenCV Haar face detector, box calibrated on WFLW, then two refinement passes that
 re-crop around the previous prediction exactly like the training crop (tuned on WFLW validation:
 5.98% → 5.11% NME from detector boxes).</li>
+<li>Live mode: after the first detection the face is tracked by cropping around the previous frame's
+landmarks; the detector re-checks every 15 frames and landmarks are smoothed between frames.</li>
 </ul>""")
 
 st.write("")

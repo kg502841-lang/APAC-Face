@@ -8,6 +8,7 @@ A face detector box has a different scale and offset, so:
      training, and the face is predicted again (`refine_iterations` times).
 
     python -m src.inference --image face.jpg --model proposed --out results/predictions/face.jpg
+    python -m src.inference --webcam                 # live window with face tracking (src/live.py)
 """
 from __future__ import annotations
 
@@ -280,6 +281,14 @@ def main() -> None:
     parser.add_argument("--calibrate-detector", action="store_true",
                         help="fit the face-detector box calibration on WFLW train images")
     parser.add_argument("--samples", type=int, default=800)
+    live = parser.add_argument_group("live mode")
+    live.add_argument("--webcam", action="store_true", help="live landmarks from a webcam")
+    live.add_argument("--camera", type=int, default=None, help="camera index (default from config)")
+    live.add_argument("--video", default=None, help="run live mode on a video file instead")
+    live.add_argument("--record", default=None, help="save the annotated stream as .mp4")
+    live.add_argument("--headless", action="store_true", help="no window (with --video/--record)")
+    live.add_argument("--max-frames", type=int, default=None)
+    live.add_argument("--no-mirror", action="store_true", help="do not mirror webcam frames")
     args = parser.parse_args()
     cfg = load_config(args.config)
 
@@ -287,8 +296,8 @@ def main() -> None:
         calib = calibrate_detector(cfg, args.samples)
         log.info("Calibration: %s", calib)
         return
-    if not args.image:
-        parser.error("--image is required (or use --calibrate-detector)")
+    if not (args.image or args.webcam or args.video):
+        parser.error("give --image, --webcam or --video (or use --calibrate-detector)")
     name = args.model or cfg["inference"]["default_model"]
     ckpt = resolve_path(cfg["paths"]["checkpoints"]) / f"{name}.pth"
     if not ckpt.is_file():
@@ -296,6 +305,16 @@ def main() -> None:
                          f"python -m src.train --experiment {name}")
     predictor = LandmarkPredictor(ckpt, args.device, FaceDetector(load_calibration(cfg)),
                                   int(cfg["inference"]["refine_iterations"]))
+    if args.webcam or args.video:
+        from .live import run as run_live
+
+        live_cfg = cfg.get("live", {})
+        source = args.video if args.video else (
+            args.camera if args.camera is not None else int(live_cfg.get("camera_index", 0)))
+        run_live(predictor, source, live_cfg, mirror=False if (args.no_mirror or args.video) else None,
+                 headless=args.headless, record=args.record, max_frames=args.max_frames,
+                 snapshot_dir=resolve_path(cfg["paths"]["results"]) / "predictions")
+        return
     image = load_image(args.image)
     pred = predictor.predict(image)
     for w in pred.warnings:
