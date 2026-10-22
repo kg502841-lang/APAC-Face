@@ -71,6 +71,13 @@ experiments:
     description: Augmentation plus attribute-balanced sampling over WFLW challenge conditions.
     augment: true
     balanced_sampling: true
+  robust:
+    label: Detector-robust
+    description: Proposed recipe, but half of the training crops start from MediaPipe-style face boxes; checkpoint chosen on MediaPipe-seeded validation crops.
+    augment: true
+    balanced_sampling: true
+    detector_crop_prob: 0.5     # needs data/cache/detector_boxes.npz (python -m src.mediapipe_baseline --export-boxes)
+    select_on: detector         # canonical | detector
 
 eval:
   baseline: baseline
@@ -80,7 +87,11 @@ eval:
   bootstrap_samples: 2000
 
 inference:
-  default_model: proposed
+  # Deployed model. "robust" is better whenever a face detector supplies the box (WFLW val, Haar boxes +
+  # 2 refinements: 4.93% vs 5.11% NME; test, MediaPipe boxes: 6.51% vs 6.60%); "proposed" is marginally
+  # better on the standard annotated-crop protocol and stays the headline model of the baseline comparison.
+  default_model: robust
+  web_model: robust           # model exported to the Faceify web app (python -m src.export_web)
   refine_iterations: 2        # re-crop around the previous prediction, matching the training crop.
                               # Tuned on WFLW val (detector boxes): 0 -> 5.98%, 1 -> 5.27%, 2 -> 5.11%, 3 -> 5.03% NME
   max_upload_mb: 10

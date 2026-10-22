@@ -20,3 +20,10 @@ proposed,illumination,698,6.195,9.60,0.4227
 proposed,makeup,206,6.150,11.17,0.4191
 proposed,occlusion,736,7.213,17.66,0.3555
 proposed,blur,773,7.032,13.71,0.3611
+robust,full,2500,6.488,12.08,0.4055
+robust,pose,326,11.747,53.07,0.0910
+robust,expression,314,7.352,11.15,0.3267
+robust,illumination,698,6.248,9.46,0.4202
+robust,makeup,206,6.116,10.19,0.4241
+robust,occlusion,736,7.324,18.21,0.3522
+robust,blur,773,7.161,14.36,0.3539

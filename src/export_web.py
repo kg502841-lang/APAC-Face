@@ -3,7 +3,7 @@
     python -m src.export_web --apac-source "D:/data/APAC asian images.zip"
 
 Committed outputs (no dataset content):
-    web/models/apac_proposed.onnx      the proposed model for ONNX Runtime Web
+    web/models/apac_face.onnx          the deployed model (inference.web_model) for ONNX Runtime Web
     web/models/model_meta.json         preprocessing, landmark maps, MediaPipe box calibration
     web/data/benchmark_results.json    measured results shown on the page
 Git-ignored outputs (dataset content, regenerate locally):
@@ -30,6 +30,8 @@ from .model import load_inference_checkpoint
 from .utils import get_logger, load_config, load_json, resolve_path, save_json
 
 log = get_logger("export_web")
+
+MODEL_FILE = "apac_face.onnx"
 
 REGIONS = {  # group key in file names -> region label used by the Faceify gallery
     "East_Asian": ("East Asia", True), "Indian": ("South Asia", True),
@@ -76,7 +78,7 @@ def model_meta(cfg: dict[str, Any], onnx_info: dict[str, Any]) -> dict[str, Any]
     exp = cfg["experiments"][onnx_info["experiment"]]
     return {
         "name": f"APAC-Face {exp.get('label', onnx_info['experiment'])}",
-        "model_file": "apac_proposed.onnx", "input_name": "image", "output_name": "landmarks",
+        "model_file": MODEL_FILE, "input_name": "image", "output_name": "landmarks",
         **onnx_info,
         "mean": IMAGENET_MEAN.tolist(), "std": IMAGENET_STD.tolist(),
         "num_landmarks": 98,
@@ -175,18 +177,18 @@ def export_apac_gallery(src_path: str, web: Path, per_group: int, seed: int) -> 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export the model and data for the Faceify web app")
     parser.add_argument("--config", default=None)
-    parser.add_argument("--experiment", default=None, help="model to export (default: eval.proposed)")
+    parser.add_argument("--experiment", default=None, help="model to export (default: inference.web_model)")
     parser.add_argument("--apac-source", default=None, help="folder or .zip of {id}_{Group}.jpg photos")
     parser.add_argument("--wflw-per-condition", type=int, default=10)
     parser.add_argument("--apac-per-group", type=int, default=30)
     args = parser.parse_args()
     cfg = load_config(args.config)
     web = resolve_path(cfg["paths"].get("web", "web"))
-    experiment = args.experiment or cfg["eval"]["proposed"]
+    experiment = args.experiment or cfg["inference"].get("web_model") or cfg["eval"]["proposed"]
 
-    info = export_onnx(cfg, experiment, web / "models" / "apac_proposed.onnx")
+    info = export_onnx(cfg, experiment, web / "models" / MODEL_FILE)
     save_json(model_meta(cfg, info), web / "models" / "model_meta.json")
-    save_json(benchmark_results(cfg), web / "data" / "benchmark_results.json")
+    save_json({**benchmark_results(cfg), "web_model": experiment}, web / "data" / "benchmark_results.json")
     build_cache(cfg)
     n = export_wflw_samples(cfg, web, args.wflw_per_condition, int(cfg["seed"]))
     log.info("WFLW benchmark gallery: %d faces with real ground truth", n)

@@ -1,15 +1,15 @@
 {
-  "name": "APAC-Face Proposed",
-  "model_file": "apac_proposed.onnx",
+  "name": "APAC-Face Detector-robust",
+  "model_file": "apac_face.onnx",
   "input_name": "image",
   "output_name": "landmarks",
-  "experiment": "proposed",
+  "experiment": "robust",
   "input_size": 224,
   "box_scale": 1.2,
-  "val_nme": 0.05321313442907586,
-  "epoch": 60,
-  "onnx_max_abs_diff": 7.748603820800781e-07,
-  "onnx_sha256": "361978958bbbb4f3a6404bbe48a39869f2174ca51e7e3a8757ba4fae416ecea6",
+  "val_nme": 0.05952808695193648,
+  "epoch": 59,
+  "onnx_max_abs_diff": 2.384185791015625e-07,
+  "onnx_sha256": "7d6e144e7cb95b07b4718fedb6c1811e45b1e2442779a2648a2d82dc581b03d5",
   "mean": [
     0.48500001430511475,
     0.4560000002384186,
@@ -318,5 +318,5 @@
     "dx": -0.001278246520087123,
     "dy": 0.08092279732227325
   },
-  "exported": "2026-10-23 01:07:32"
+  "exported": "2026-10-23 02:06:22"
 }

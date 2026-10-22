@@ -29,7 +29,7 @@ import numpy as np
 import torch
 
 from . import plotting
-from .dataset import ATTRIBUTE_LABELS, ATTRIBUTES, build_cache, load_split
+from .dataset import ATTRIBUTE_LABELS, ATTRIBUTES, DETECTOR_BOXES_FILE, build_cache, load_split
 from .evaluate import predict_test_set
 from .landmarks import EYES_68, INNER_68, landmark_box, to_68
 from .metrics import (auc, failure_rate, paired_bootstrap, per_sample_nme, relative_improvement)
@@ -167,6 +167,40 @@ def fit_box_calibration(mp478: np.ndarray, gt98: np.ndarray, box_scale: float) -
             "dy": float(np.median(dys)), "faces": len(ratios)}
 
 
+def export_detector_boxes(cfg: dict[str, Any], landmarker: MediaPipeLandmarker,
+                          calib: dict[str, float]) -> Path:
+    """MediaPipe-seeded crop boxes for every cached face (in cached-crop pixels).
+
+    Used to train and validate a detector-robust model: the boxes are exactly what the web app
+    builds from MediaPipe's detection. Training faces MediaPipe misses get the canonical box
+    perturbed by the box error of a randomly drawn detected training face, so every training face
+    has a realistic detector-style box. Missed val/test faces are NaN.
+    """
+    from .dataset import canonical_cache_box
+
+    cx0, cy0, side0 = canonical_cache_box(cfg)
+    rng = np.random.default_rng(int(cfg["seed"]))
+    arrays: dict[str, np.ndarray] = {}
+    for split in ("train", "val", "test"):
+        _, _, in_crop, found = run_on_split(cfg, split, landmarker)
+        boxes = np.full((len(found), 3), np.nan, np.float32)
+        for i in np.flatnonzero(found):
+            boxes[i] = mediapipe_seed_box(in_crop[i], calib)
+        if split == "train":
+            ok = np.isfinite(boxes[:, 0])
+            rel = np.column_stack([(boxes[ok, 0] - cx0) / side0, (boxes[ok, 1] - cy0) / side0, boxes[ok, 2] / side0])
+            for i in np.flatnonzero(~ok):
+                dx, dy, s = rel[rng.integers(len(rel))]
+                boxes[i] = (cx0 + dx * side0, cy0 + dy * side0, s * side0)
+            arrays["train_detected"] = ok
+            arrays["train_box_error"] = rel
+        arrays[split] = boxes
+        log.info("detector boxes %s: MediaPipe found %d/%d faces", split, int(found.sum()), len(found))
+    out = resolve_path(cfg["paths"]["cache_dir"]) / DETECTOR_BOXES_FILE
+    np.savez_compressed(out, **arrays)
+    return out
+
+
 def score(pred68: np.ndarray, gt68: np.ndarray, thr: float) -> dict[str, Any]:
     nme = per_sample_nme(pred68, gt68, outer_eyes=EYES_68)
     inner = per_sample_nme(pred68, gt68, outer_eyes=EYES_68, points=INNER_68)
@@ -194,6 +228,8 @@ def main() -> None:
     parser.add_argument("--config", default=None)
     parser.add_argument("--train-faces", type=int, default=None)
     parser.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
+    parser.add_argument("--export-boxes", action="store_true",
+                        help="only write MediaPipe-style crop boxes for all faces (detector-robust training)")
     args = parser.parse_args()
     cfg = load_config(args.config)
     build_cache(cfg)
@@ -201,6 +237,15 @@ def main() -> None:
     thr = float(cfg["eval"]["failure_threshold"])
     n_boot = int(cfg["eval"]["bootstrap_samples"])
     landmarker = MediaPipeLandmarker(cfg["paths"]["mediapipe_model"], float(mcfg.get("min_confidence", 0.5)))
+    if args.export_boxes:
+        from .utils import load_json
+        calib_path = resolve_path(cfg["paths"]["checkpoints"]) / "mediapipe_calibration.json"
+        if not calib_path.is_file():
+            raise SystemExit("Run python -m src.mediapipe_baseline once first (it learns the box calibration)")
+        out = export_detector_boxes(cfg, landmarker, load_json(calib_path))
+        landmarker.close()
+        log.info("Wrote %s", out)
+        return
 
     # 1) Learn MediaPipe's convention offset (and its box->crop mapping) on training faces only.
     tr_idx, tr_mp, _, tr_found = run_on_split(cfg, "train", landmarker,
@@ -227,18 +272,20 @@ def main() -> None:
         "mediapipe": ("Google MediaPipe", mp68),
         "mediapipe_calibrated": ("MediaPipe (calibrated)", mp68_cal),
     }
+    from .inference import LandmarkPredictor
+    ours: list[str] = []
     for name, exp in cfg["experiments"].items():
         path = ckpt_dir / f"{name}.pth"
-        if path.is_file():
-            model, _ = load_inference_checkpoint(path, device)
-            with torch.no_grad():
-                methods[name] = (exp.get("label", name), to_68(predict_test_set(model, cfg, device), "wflw"))
-    prop = cfg["eval"]["proposed"]
-    if (ckpt_dir / f"{prop}.pth").is_file():   # same face-location information MediaPipe had
-        from .inference import LandmarkPredictor
-        predictor = LandmarkPredictor(ckpt_dir / f"{prop}.pth", args.device)
-        seeded = predict_mediapipe_seeded(cfg, predictor, mp478_crop, found, box_cal)
-        methods[f"{prop}_mp_located"] = ("APAC-Face (MediaPipe-located)", to_68(seeded, "wflw"))
+        if not path.is_file():
+            continue
+        label = exp.get("label", name)
+        model, _ = load_inference_checkpoint(path, device)
+        with torch.no_grad():
+            methods[name] = (label, to_68(predict_test_set(model, cfg, device), "wflw"))
+        # Same face-location information MediaPipe had: the crop comes from MediaPipe's detection.
+        seeded = predict_mediapipe_seeded(cfg, LandmarkPredictor(path, args.device), mp478_crop, found, box_cal)
+        methods[f"{name}_mp_located"] = (f"{label} (MediaPipe-located)", to_68(seeded, "wflw"))
+        ours += [name, f"{name}_mp_located"]
 
     report: dict[str, Any] = {
         "generated": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -269,19 +316,25 @@ def main() -> None:
             mask = found & (test["attributes"][:, j] == 1)
             s = score(pred[mask], gt68[mask], thr)
             report["subsets"][key][a] = {k: s[k] for k in ("faces", "nme", "nme_inner", "failure_rate")}
-    for ours in (prop, f"{prop}_mp_located"):
-        if ours not in nmes:
-            continue
+    for key in ours:
         for ref in ("mediapipe", "mediapipe_calibrated"):
-            report["comparison"][f"{ours}_vs_{ref}"] = {
+            report["comparison"][f"{key}_vs_{ref}"] = {
                 "nme_reduction_pct": relative_improvement(report["methods"][ref]["detected_faces"]["nme"],
-                                                          report["methods"][ours]["detected_faces"]["nme"]),
+                                                          report["methods"][key]["detected_faces"]["nme"]),
                 "inner_nme_reduction_pct": relative_improvement(
                     report["methods"][ref]["detected_faces"]["nme_inner"],
-                    report["methods"][ours]["detected_faces"]["nme_inner"]),
-                "bootstrap_nme_diff": paired_bootstrap(nmes[ref], nmes[ours], n_boot, cfg["seed"]),
-                "bootstrap_inner_nme_diff": paired_bootstrap(inners[ref], inners[ours], n_boot, cfg["seed"]),
+                    report["methods"][key]["detected_faces"]["nme_inner"]),
+                "bootstrap_nme_diff": paired_bootstrap(nmes[ref], nmes[key], n_boot, cfg["seed"]),
+                "bootstrap_inner_nme_diff": paired_bootstrap(inners[ref], inners[key], n_boot, cfg["seed"]),
             }
+    # Detector-robust vs proposed under the deployment condition (same face location as MediaPipe).
+    if "robust_mp_located" in nmes and "proposed_mp_located" in nmes:
+        report["comparison"]["robust_mp_located_vs_proposed_mp_located"] = {
+            "nme_reduction_pct": relative_improvement(report["methods"]["proposed_mp_located"]["detected_faces"]["nme"],
+                                                      report["methods"]["robust_mp_located"]["detected_faces"]["nme"]),
+            "bootstrap_nme_diff": paired_bootstrap(nmes["proposed_mp_located"], nmes["robust_mp_located"],
+                                                   n_boot, cfg["seed"]),
+        }
 
     res = resolve_path(cfg["paths"]["results"])
     save_json(report, res / "mediapipe_comparison.json")
@@ -300,21 +353,26 @@ def main() -> None:
         log.info("%-24s NME68 %.2f%%  inner %.2f%%  mean err %.2f px  FR %.2f%%", m["label"], d["nme"] * 100,
                  d["nme_inner"] * 100, d["mean_error_px"], d["failure_rate"] * 100)
     for k, c in report["comparison"].items():
-        b, bi = c["bootstrap_nme_diff"], c["bootstrap_inner_nme_diff"]
-        log.info("%s: NME -%.1f%% (95%% CI of drop %.2f-%.2f pts); inner NME -%.1f%% (CI %.2f-%.2f pts, p=%.4f)",
-                 k, c["nme_reduction_pct"], b["ci_low"] * 100, b["ci_high"] * 100, c["inner_nme_reduction_pct"],
-                 bi["ci_low"] * 100, bi["ci_high"] * 100, bi["p_value"])
+        b = c["bootstrap_nme_diff"]
+        line = f"{k}: NME change {-c['nme_reduction_pct']:+.1f}% (95% CI of drop {b['ci_low'] * 100:.2f}-{b['ci_high'] * 100:.2f} pts)"
+        if "bootstrap_inner_nme_diff" in c:
+            bi = c["bootstrap_inner_nme_diff"]
+            line += (f"; inner {-c['inner_nme_reduction_pct']:+.1f}% (CI of drop {bi['ci_low'] * 100:.2f}-"
+                     f"{bi['ci_high'] * 100:.2f} pts, p={bi['p_value']:.4f})")
+        log.info(line)
     log.info("MediaPipe detected %d/%d test faces. Wrote mediapipe_comparison.json/.png", found.sum(), len(found))
 
 
 def _figures(report: dict[str, Any], res: Path, thr: float) -> None:
-    order = [k for k in ("mediapipe", "mediapipe_calibrated", "baseline", "augmented", "proposed",
-                         "proposed_mp_located") if k in report["methods"]]
-    short = {"mediapipe": "MediaPipe", "mediapipe_calibrated": "MediaPipe\ncorrected", "baseline": "Ours\nbaseline",
-             "augmented": "Ours\naugmented", "proposed": "Ours\nGT crop", "proposed_mp_located": "Ours\nMP-located"}
+    order = [k for k in ("mediapipe", "mediapipe_calibrated", "baseline", "proposed", "proposed_mp_located",
+                         "robust", "robust_mp_located") if k in report["methods"]]
+    short = {"mediapipe": "MediaPipe", "mediapipe_calibrated": "MediaPipe\ncorrected", "baseline": "Baseline\nGT crop",
+             "proposed": "Proposed\nGT crop", "proposed_mp_located": "Proposed\nMP-located",
+             "robust": "Robust\nGT crop", "robust_mp_located": "Robust\nMP-located"}
     labels = [short.get(k, report["methods"][k]["label"]) for k in order]
     d = [report["methods"][k]["detected_faces"] for k in order]
-    colors = {"mediapipe": "#898781", "mediapipe_calibrated": "#c3c2b7", "proposed_mp_located": "#199e70"}
+    colors = {"mediapipe": "#898781", "mediapipe_calibrated": "#c3c2b7", "proposed_mp_located": "#199e70",
+              "robust_mp_located": "#c98500"}
     plotting.MODEL_COLORS.update(colors)
     plotting.bar_panels(
         res / "mediapipe_comparison.png", order, labels,
@@ -322,7 +380,8 @@ def _figures(report: dict[str, Any], res: Path, thr: float) -> None:
          ("Mean error (px) - lower is better", [x["mean_error_px"] for x in d], "{:.2f}"),
          (f"Failure rate @{thr * 100:.0f}% (%)", [x["failure_rate"] * 100 for x in d], "{:.2f}")],
         f"Google MediaPipe vs APAC-Face on WFLW test ({report['faces_detected']:,} faces MediaPipe detected)")
-    sub_order = [k for k in ("mediapipe", "mediapipe_calibrated", "proposed") if k in report["subsets"]]
+    sub_order = [k for k in ("mediapipe", "mediapipe_calibrated", "proposed_mp_located", "robust_mp_located")
+                 if k in report["subsets"]]
     groups = [ATTRIBUTE_LABELS[a].replace(" ", "\n", 1) for a in ATTRIBUTES]
     vals = np.array([[report["subsets"][k][a]["nme"] * 100 for a in ATTRIBUTES] for k in sub_order])
     plotting.grouped_bars(res / "mediapipe_subsets.png", groups, sub_order,

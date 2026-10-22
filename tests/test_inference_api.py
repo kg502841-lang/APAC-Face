@@ -61,7 +61,7 @@ def test_api_without_models_degrades_gracefully(tmp_path, monkeypatch):
     with _client(tmp_path, monkeypatch, with_model=False) as client:
         health = client.get("/health").json()
         assert health["status"] == "degraded" and health["models_loaded"] == []
-        assert set(health["missing_checkpoints"]) == {"baseline", "augmented", "proposed"}
+        assert set(health["missing_checkpoints"]) == set(load_config()["experiments"])
         r = client.post("/predict", files={"file": ("x.png", png_bytes(), "image/png")})
         assert r.status_code == 503
         assert client.get("/metrics").status_code == 404

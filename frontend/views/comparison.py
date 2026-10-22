@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.metrics import ced_curve
+from src.plotting import canonical_val_nme
 
 common.hero("Measured results", "Model Comparison",
             "Every number on this page is computed by `python -m src.evaluate` on the 2,500-face WFLW "
@@ -71,8 +72,9 @@ mpc = common.load_result_json("mediapipe_comparison.json")
 if mpc:
     st.markdown("#### Against Google MediaPipe (68 common points, real WFLW ground truth)")
     order = [k for k in ("mediapipe", "mediapipe_calibrated", "baseline", "augmented", "proposed",
-                         "proposed_mp_located") if k in mpc["methods"]]
-    mp_colors = {"mediapipe": "#898781", "mediapipe_calibrated": "#c3c2b7", "proposed_mp_located": "#199e70"}
+                         "proposed_mp_located", "robust", "robust_mp_located") if k in mpc["methods"]]
+    mp_colors = {"mediapipe": "#898781", "mediapipe_calibrated": "#c3c2b7", "proposed_mp_located": "#199e70",
+                 "robust_mp_located": "#c98500"}
     labels = [mpc["methods"][k]["label"] for k in order]
     vals = [mpc["methods"][k]["detected_faces"]["nme"] * 100 for k in order]
     fig = go.Figure(go.Bar(
@@ -92,7 +94,8 @@ if mpc:
                      "Point failure rate >8% (%)": round(d["point_failure_rate"] * 100, 1),
                      "Jawline (%)": round(d["regions"]["Jawline"] * 100, 2)})
     st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
-    loc = "proposed_mp_located" if "proposed_mp_located" in mpc["methods"] else cfg["eval"]["proposed"]
+    web = cfg["inference"].get("web_model", cfg["eval"]["proposed"])
+    loc = f"{web}_mp_located" if f"{web}_mp_located" in mpc["methods"] else web
     c1 = mpc["comparison"][f"{loc}_vs_mediapipe"]
     c2 = mpc["comparison"][f"{loc}_vs_mediapipe_calibrated"]
     st.caption(
@@ -125,11 +128,11 @@ for n in names:
     if not hist:
         continue
     h = hist["history"]
-    fig.add_trace(go.Scatter(x=h["epoch"], y=np.array(h["val_nme"]) * 100, mode="lines", name=common.model_label(n),
+    fig.add_trace(go.Scatter(x=h["epoch"], y=canonical_val_nme(h) * 100, mode="lines", name=common.model_label(n),
                              line=dict(color=common.model_color(n, names), width=2),
                              hovertemplate="epoch %{x}: val NME %{y:.2f}%<extra>" + common.model_label(n) + "</extra>"))
 fig.update_layout(hovermode="x unified")
-st.plotly_chart(common.style_figure(fig, 340, "Validation NME (%)", "Epoch"), width="stretch")
+st.plotly_chart(common.style_figure(fig, 340, "Validation NME, annotated crop (%)", "Epoch"), width="stretch")
 
 st.markdown("#### Results table")
 vs = comp.get("vs_baseline", {})

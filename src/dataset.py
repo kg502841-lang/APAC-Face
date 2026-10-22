@@ -298,11 +298,29 @@ def canonical_cache_box(cfg: dict[str, Any]) -> tuple[float, float, float]:
     return c, c, s["cache_size"] / s["cache_expand"]
 
 
+DETECTOR_BOXES_FILE = "detector_boxes.npz"
+
+
+def load_detector_boxes(cfg: dict[str, Any], split: str) -> np.ndarray:
+    """MediaPipe-style crop boxes (N, 3) in cached-crop pixels; NaN where MediaPipe found no face."""
+    path = resolve_path(cfg["paths"]["cache_dir"]) / DETECTOR_BOXES_FILE
+    if not path.is_file():
+        raise FileNotFoundError(f"{path} missing - run python -m src.mediapipe_baseline --export-boxes")
+    with np.load(path) as data:
+        return data[split]
+
+
 class WFLWCropDataset(Dataset):
-    """Serves (image tensor, normalised landmarks in [0, 1], index) from the face-crop cache."""
+    """Serves (image tensor, normalised landmarks in [0, 1], index) from the face-crop cache.
+
+    `detector_boxes` (N, 3) replaces the canonical crop box with a detector-style box for a share
+    `detector_prob` of the samples (1.0 = always, e.g. for detector-seeded validation). Augmentation
+    jitter is applied on top of whichever box is used.
+    """
 
     def __init__(self, cfg: dict[str, Any], split: str, augmenter: LandmarkAugmenter,
-                 limit: int | None = None):
+                 limit: int | None = None, detector_boxes: np.ndarray | None = None,
+                 detector_prob: float = 0.0):
         data = load_split(cfg, split)
         n = len(data["files"]) if limit is None else min(limit, len(data["files"]))
         self.cache_dir = resolve_path(cfg["paths"]["cache_dir"])
@@ -311,7 +329,19 @@ class WFLWCropDataset(Dataset):
         self.attributes = data["attributes"][:n]
         self.augmenter = augmenter
         self.box = canonical_cache_box(cfg)
+        self.detector_boxes = None if detector_boxes is None else np.asarray(detector_boxes[:n], np.float32)
+        self.detector_prob = float(detector_prob)
         self._rng: np.random.Generator | None = None
+
+    def crop_box(self, idx: int, rng: np.random.Generator) -> tuple[float, float, float]:
+        if self.detector_boxes is None or self.detector_prob <= 0:
+            return self.box
+        b = self.detector_boxes[idx]
+        if not np.isfinite(b).all():
+            return self.box
+        if self.detector_prob >= 1.0 or rng.random() < self.detector_prob:
+            return float(b[0]), float(b[1]), float(b[2])
+        return self.box
 
     def __len__(self) -> int:
         return len(self.files)
@@ -327,7 +357,8 @@ class WFLWCropDataset(Dataset):
         bgr = cv2.imread(str(self.cache_dir / self.files[idx]), cv2.IMREAD_COLOR)
         if bgr is None:
             raise FileNotFoundError(f"Cached crop missing: {self.files[idx]} (rebuild the cache)")
-        image, lm = self.augmenter(bgr[:, :, ::-1], self.landmarks[idx], self.box, self._generator())
+        rng = self._generator()
+        image, lm = self.augmenter(bgr[:, :, ::-1], self.landmarks[idx], self.crop_box(idx, rng), rng)
         target = torch.from_numpy(lm / float(self.augmenter.size)).float()
         return to_tensor(image), target, idx
 

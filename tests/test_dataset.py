@@ -64,3 +64,25 @@ def test_real_wflw_annotations_parse():
     samples = parse_annotation_file(paths.test_list)
     assert len(samples) == 2500
     assert (paths.images / samples[0].image_name).is_file()
+
+
+def _crop_box_dataset(boxes, prob):
+    from src.dataset import WFLWCropDataset
+    ds = WFLWCropDataset.__new__(WFLWCropDataset)  # crop_box needs no cached images
+    ds.box = (167.5, 167.5, 224.0)
+    ds.detector_boxes = None if boxes is None else np.asarray(boxes, np.float32)
+    ds.detector_prob = prob
+    return ds
+
+
+def test_detector_crop_box_selection():
+    rng = np.random.default_rng(0)
+    boxes = [[160.0, 170.0, 230.0], [np.nan, np.nan, np.nan]]
+    always = _crop_box_dataset(boxes, 1.0)
+    assert always.crop_box(0, rng) == (160.0, 170.0, 230.0)
+    assert always.crop_box(1, rng) == always.box          # MediaPipe missed this face
+    assert _crop_box_dataset(boxes, 0.0).crop_box(0, rng) == always.box
+    assert _crop_box_dataset(None, 0.5).crop_box(0, rng) == always.box
+    half = _crop_box_dataset(boxes, 0.5)
+    share = np.mean([half.crop_box(0, rng) != half.box for _ in range(2000)])
+    assert 0.45 < share < 0.55

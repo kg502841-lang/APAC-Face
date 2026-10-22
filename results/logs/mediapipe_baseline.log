@@ -1,23 +1,40 @@
 WARNING: Logging before InitGoogle() is written to STDERR
 INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
-01:04:33 | INFO    | mediapipe | train: 500/2000 faces (8s)
-01:04:41 | INFO    | mediapipe | train: 1000/2000 faces (16s)
-01:04:49 | INFO    | mediapipe | train: 1500/2000 faces (25s)
-01:04:57 | INFO    | mediapipe | train: 2000/2000 faces (33s)
-01:04:58 | INFO    | mediapipe | Train: MediaPipe found 1914/2000 faces; offset learned
-01:05:06 | INFO    | mediapipe | test: 500/2500 faces (8s)
-01:05:13 | INFO    | mediapipe | test: 1000/2500 faces (16s)
-01:05:19 | INFO    | mediapipe | test: 1500/2500 faces (21s)
-01:05:24 | INFO    | mediapipe | test: 2000/2500 faces (26s)
-01:05:31 | INFO    | mediapipe | test: 2500/2500 faces (34s)
-01:06:55 | INFO    | mediapipe | Google MediaPipe         NME68 8.44%  inner 6.44%  mean err 6.14 px  FR 21.17%
-01:06:55 | INFO    | mediapipe | MediaPipe (calibrated)   NME68 7.28%  inner 5.46%  mean err 5.16 px  FR 17.73%
-01:06:55 | INFO    | mediapipe | Baseline                 NME68 6.29%  inner 5.95%  mean err 4.74 px  FR 11.25%
-01:06:55 | INFO    | mediapipe | Augmented (ablation)     NME68 6.00%  inner 5.57%  mean err 4.53 px  FR 8.20%
-01:06:55 | INFO    | mediapipe | Proposed                 NME68 5.69%  inner 5.22%  mean err 4.32 px  FR 6.53%
-01:06:55 | INFO    | mediapipe | APAC-Face (MediaPipe-located) NME68 6.60%  inner 5.92%  mean err 4.88 px  FR 9.26%
-01:06:55 | INFO    | mediapipe | proposed_vs_mediapipe: NME -32.6% (95% CI of drop 2.42-3.12 pts); inner NME -18.9% (CI 0.90-1.59 pts, p=0.0000)
-01:06:55 | INFO    | mediapipe | proposed_vs_mediapipe_calibrated: NME -21.8% (95% CI of drop 1.26-1.96 pts); inner NME -4.4% (CI -0.08-0.61 pts, p=0.1890)
-01:06:55 | INFO    | mediapipe | proposed_mp_located_vs_mediapipe: NME -21.8% (95% CI of drop 1.74-1.93 pts); inner NME -8.1% (CI 0.45-0.59 pts, p=0.0000)
-01:06:55 | INFO    | mediapipe | proposed_mp_located_vs_mediapipe_calibrated: NME -9.3% (95% CI of drop 0.57-0.77 pts); inner NME --8.5% (CI -0.53--0.38 pts, p=0.0000)
-01:06:55 | INFO    | mediapipe | MediaPipe detected 2267/2500 test faces. Wrote mediapipe_comparison.json/.png
+01:54:37 | INFO    | mediapipe | train: 500/2000 faces (8s)
+01:54:44 | INFO    | mediapipe | train: 1000/2000 faces (16s)
+01:54:52 | INFO    | mediapipe | train: 1500/2000 faces (24s)
+01:55:00 | INFO    | mediapipe | train: 2000/2000 faces (31s)
+01:55:00 | INFO    | mediapipe | Train: MediaPipe found 1914/2000 faces; offset learned
+01:55:08 | INFO    | mediapipe | test: 500/2500 faces (8s)
+01:55:16 | INFO    | mediapipe | test: 1000/2500 faces (16s)
+01:55:24 | INFO    | mediapipe | test: 1500/2500 faces (23s)
+01:55:32 | INFO    | mediapipe | test: 2000/2500 faces (31s)
+01:55:39 | INFO    | mediapipe | test: 2500/2500 faces (39s)
+01:58:42 | INFO    | mediapipe | Google MediaPipe         NME68 8.44%  inner 6.44%  mean err 6.14 px  FR 21.17%
+01:58:42 | INFO    | mediapipe | MediaPipe (calibrated)   NME68 7.28%  inner 5.46%  mean err 5.16 px  FR 17.73%
+01:58:42 | INFO    | mediapipe | Baseline                 NME68 6.29%  inner 5.95%  mean err 4.74 px  FR 11.25%
+01:58:42 | INFO    | mediapipe | Baseline (MediaPipe-located) NME68 7.57%  inner 6.75%  mean err 5.58 px  FR 16.32%
+01:58:42 | INFO    | mediapipe | Augmented (ablation)     NME68 6.00%  inner 5.57%  mean err 4.53 px  FR 8.20%
+01:58:42 | INFO    | mediapipe | Augmented (ablation) (MediaPipe-located) NME68 6.93%  inner 6.27%  mean err 5.11 px  FR 11.07%
+01:58:42 | INFO    | mediapipe | Proposed                 NME68 5.69%  inner 5.22%  mean err 4.32 px  FR 6.53%
+01:58:42 | INFO    | mediapipe | Proposed (MediaPipe-located) NME68 6.60%  inner 5.92%  mean err 4.88 px  FR 9.26%
+01:58:42 | INFO    | mediapipe | Detector-robust          NME68 5.74%  inner 5.24%  mean err 4.34 px  FR 7.01%
+01:58:42 | INFO    | mediapipe | Detector-robust (MediaPipe-located) NME68 6.51%  inner 5.85%  mean err 4.79 px  FR 8.78%
+01:58:42 | INFO    | mediapipe | baseline_vs_mediapipe: NME change -25.4% (95% CI of drop 1.81-2.53 pts); inner -7.6% (CI of drop 0.16-0.88 pts, p=0.0030)
+01:58:42 | INFO    | mediapipe | baseline_vs_mediapipe_calibrated: NME change -13.5% (95% CI of drop 0.64-1.37 pts); inner +8.9% (CI of drop -0.83--0.10 pts, p=0.0180)
+01:58:42 | INFO    | mediapipe | baseline_mp_located_vs_mediapipe: NME change -10.3% (95% CI of drop 0.75-0.98 pts); inner +4.8% (CI of drop -0.41--0.20 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | baseline_mp_located_vs_mediapipe_calibrated: NME change +4.1% (95% CI of drop -0.41--0.19 pts); inner +23.6% (CI of drop -1.39--1.18 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | augmented_vs_mediapipe: NME change -28.9% (95% CI of drop 2.11-2.81 pts); inner -13.6% (CI of drop 0.55-1.25 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | augmented_vs_mediapipe_calibrated: NME change -17.5% (95% CI of drop 0.94-1.65 pts); inner +2.0% (CI of drop -0.44-0.26 pts, p=0.5250)
+01:58:42 | INFO    | mediapipe | augmented_mp_located_vs_mediapipe: NME change -17.9% (95% CI of drop 1.42-1.60 pts); inner -2.7% (CI of drop 0.11-0.25 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | augmented_mp_located_vs_mediapipe_calibrated: NME change -4.8% (95% CI of drop 0.26-0.44 pts); inner +14.7% (CI of drop -0.88--0.73 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | proposed_vs_mediapipe: NME change -32.6% (95% CI of drop 2.42-3.12 pts); inner -18.9% (CI of drop 0.90-1.59 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | proposed_vs_mediapipe_calibrated: NME change -21.8% (95% CI of drop 1.26-1.96 pts); inner -4.4% (CI of drop -0.08-0.61 pts, p=0.1890)
+01:58:42 | INFO    | mediapipe | proposed_mp_located_vs_mediapipe: NME change -21.8% (95% CI of drop 1.74-1.93 pts); inner -8.1% (CI of drop 0.45-0.59 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | proposed_mp_located_vs_mediapipe_calibrated: NME change -9.3% (95% CI of drop 0.57-0.77 pts); inner +8.5% (CI of drop -0.53--0.38 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | robust_vs_mediapipe: NME change -31.9% (95% CI of drop 2.36-3.06 pts); inner -18.6% (CI of drop 0.87-1.57 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | robust_vs_mediapipe_calibrated: NME change -21.0% (95% CI of drop 1.19-1.90 pts); inner -4.0% (CI of drop -0.11-0.59 pts, p=0.2350)
+01:58:42 | INFO    | mediapipe | robust_mp_located_vs_mediapipe: NME change -22.9% (95% CI of drop 1.84-2.02 pts); inner -9.2% (CI of drop 0.52-0.66 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | robust_mp_located_vs_mediapipe_calibrated: NME change -10.5% (95% CI of drop 0.67-0.86 pts); inner +7.2% (CI of drop -0.46--0.31 pts, p=0.0000)
+01:58:42 | INFO    | mediapipe | robust_mp_located_vs_proposed_mp_located: NME change -1.4% (95% CI of drop 0.05-0.13 pts)
+01:58:42 | INFO    | mediapipe | MediaPipe detected 2267/2500 test faces. Wrote mediapipe_comparison.json/.png

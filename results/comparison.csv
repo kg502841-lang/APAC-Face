@@ -1,4 +1,5 @@
 experiment,label,nme_pct,nme_median_pct,failure_rate_pct,auc,mae_px,gpu_latency_ms,cpu_latency_ms,nme_improvement_vs_baseline_pct,best_epoch,parameters
-baseline,Baseline,7.279,5.621,17.04,0.3850,3.25,12.40,21.52,0.00,58,2980292
-augmented,Augmented (ablation),6.747,5.583,13.24,0.3866,3.07,12.41,21.11,7.31,57,2980292
-proposed,Proposed,6.399,5.376,11.84,0.4076,2.93,12.38,21.55,12.10,60,2980292
+baseline,Baseline,7.279,5.621,17.04,0.3850,3.25,10.47,22.52,0.00,58,2980292
+augmented,Augmented (ablation),6.747,5.583,13.24,0.3866,3.07,10.62,21.17,7.31,57,2980292
+proposed,Proposed,6.399,5.376,11.84,0.4076,2.93,10.59,20.76,12.10,60,2980292
+robust,Detector-robust,6.488,5.396,12.08,0.4055,2.96,10.85,21.87,10.86,59,2980292

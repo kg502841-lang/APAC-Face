@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
-MODEL_COLORS = {"baseline": SERIES[0], "augmented": SERIES[1], "proposed": SERIES[2]}
+MODEL_COLORS = {"baseline": SERIES[0], "augmented": SERIES[1], "proposed": SERIES[2], "robust": SERIES[3]}
 SURFACE, INK, INK_2, MUTED, GRID, AXIS = "#fcfcfb", "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7"
 
 
@@ -116,6 +116,15 @@ def ced_plot(path: Path, curves: list[tuple[str, str, np.ndarray, np.ndarray]], 
     return _save(fig, path)
 
 
+def canonical_val_nme(hist: dict) -> np.ndarray:
+    """Validation NME on annotated (canonical) crops - comparable across experiments, even for runs
+    that select checkpoints on detector-seeded validation crops."""
+    canon = np.array(hist.get("val_nme_canonical") or [], dtype=float)
+    if canon.size == len(hist["val_nme"]) and np.isfinite(canon).all():
+        return canon
+    return np.array(hist["val_nme"], dtype=float)
+
+
 def training_curves(path: Path, histories: list[tuple[str, str, dict]]) -> Path:
     """Two separate panels: losses (train dashed, val solid) and validation NME per epoch."""
     _setup()
@@ -125,15 +134,16 @@ def training_curves(path: Path, histories: list[tuple[str, str, dict]]) -> Path:
         c = model_color(name, order)
         ax1.plot(hist["epoch"], hist["train_loss"], color=c, linewidth=1.5, linestyle="--")
         ax1.plot(hist["epoch"], hist["val_loss"], color=c, linewidth=2, label=label)
-        ax2.plot(hist["epoch"], np.array(hist["val_nme"]) * 100, color=c, linewidth=2, label=label)
-        best = int(np.nanargmin(hist["val_nme"]))
-        ax2.scatter([hist["epoch"][best]], [hist["val_nme"][best] * 100], s=36, color=c,
+        curve = canonical_val_nme(hist)
+        ax2.plot(hist["epoch"], curve * 100, color=c, linewidth=2, label=label)
+        best = int(np.nanargmin(hist["val_nme"]))  # the selection metric decides the saved epoch
+        ax2.scatter([hist["epoch"][best]], [curve[best] * 100], s=36, color=c,
                     edgecolor=SURFACE, linewidth=2, zorder=3)
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("Loss")
     ax1.set_title("Training loss (dashed) and validation loss (solid)", loc="left")
     ax2.set_xlabel("Epoch")
-    ax2.set_ylabel("Validation NME (%)")
+    ax2.set_ylabel("Validation NME, annotated crop (%)")
     ax2.set_title("Validation NME - dot marks the saved checkpoint", loc="left")
     for ax in (ax1, ax2):
         ax.legend(loc="upper right")

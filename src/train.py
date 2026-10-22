@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from .augmentations import AugmentationParams, LandmarkAugmenter, apply_affine, crop_matrix
 from .dataset import (ATTRIBUTES, DatasetNotFoundError, WFLWCropDataset, balanced_sample_weights,
-                      build_cache, canonical_cache_box)
+                      build_cache, canonical_cache_box, load_detector_boxes)
 from .metrics import per_sample_nme
 from .model import build_model, count_parameters, save_inference_checkpoint
 from .utils import (LOG_FORMAT, auto_batch_size, describe_device, get_device, get_logger,
@@ -135,10 +135,21 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
     build_cache(cfg)
     size = int(cfg["data"]["input_size"])
     params = AugmentationParams.from_config(cfg["augmentation"])
+    det_prob = float(exp_cfg.get("detector_crop_prob", 0.0))
+    select_on = exp_cfg.get("select_on", "canonical")
+    if select_on not in ("canonical", "detector"):
+        raise ValueError(f"select_on must be 'canonical' or 'detector', got {select_on!r}")
     train_ds = WFLWCropDataset(cfg, "train", LandmarkAugmenter(params, size, exp_cfg["augment"]),
-                               limit=512 if smoke else None)
+                               limit=512 if smoke else None,
+                               detector_boxes=load_detector_boxes(cfg, "train") if det_prob > 0 else None,
+                               detector_prob=det_prob)
     val_ds = WFLWCropDataset(cfg, "val", LandmarkAugmenter(params, size, enabled=False),
                              limit=128 if smoke else None)
+    # Detector-seeded validation: the crop a deployed system gets (MediaPipe's face location).
+    val_det_ds = (WFLWCropDataset(cfg, "val", LandmarkAugmenter(params, size, enabled=False),
+                                  limit=128 if smoke else None, detector_boxes=load_detector_boxes(cfg, "val"),
+                                  detector_prob=1.0)
+                  if select_on == "detector" else None)
 
     bs = auto_batch_size(int(batch_size or tcfg["batch_size"]), device)
     gen = torch.Generator().manual_seed(seed)
@@ -158,6 +169,8 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
                               worker_init_fn=seed_worker)
     val_loader = DataLoader(val_ds, batch_size=bs * 2, shuffle=False, num_workers=0,
                             pin_memory=device.type == "cuda")
+    val_det_loader = (DataLoader(val_det_ds, batch_size=bs * 2, shuffle=False, num_workers=0,
+                                 pin_memory=device.type == "cuda") if val_det_ds is not None else None)
 
     model = build_model(cfg["model"]).to(device)
     shape0 = mean_shape(cfg, train_ds)
@@ -175,7 +188,8 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
 
     ckpt_dir = resolve_path(cfg["paths"]["checkpoints"])
     best_path, last_path = ckpt_dir / f"{run_name}.pth", ckpt_dir / f"{run_name}_last.pth"
-    history: dict[str, list] = {k: [] for k in ("epoch", "train_loss", "val_loss", "val_nme", "lr", "seconds")}
+    history: dict[str, list] = {k: [] for k in ("epoch", "train_loss", "val_loss", "val_nme", "lr", "seconds",
+                                                "val_nme_canonical", "val_nme_detector")}
     start_epoch, best_nme, best_epoch, bad_epochs = 0, math.inf, 0, 0
 
     if resume:
@@ -185,7 +199,9 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
             optimizer.load_state_dict(state["optimizer_state"])
             scheduler.load_state_dict(state["scheduler_state"])
             scaler.load_state_dict(state["scaler_state"])
-            history = state["history"]
+            saved = state["history"]
+            done = len(saved["epoch"])
+            history = {k: saved.get(k, [float("nan")] * done) for k in history}  # older runs lack new keys
             start_epoch, best_nme = state["epoch"], state["best_nme"]
             best_epoch, bad_epochs = state["best_epoch"], state["bad_epochs"]
             torch.set_rng_state(state["torch_rng"].cpu())
@@ -203,13 +219,17 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, scaler, device, amp,
                                      float(tcfg.get("grad_clip", 0)))
         val_loss, val_nme_all = validate(model, val_loader, criterion, device, amp)
-        val_nme = float(np.nanmean(val_nme_all))
+        nme_canonical = float(np.nanmean(val_nme_all))
+        nme_detector = (float(np.nanmean(validate(model, val_det_loader, criterion, device, amp)[1]))
+                        if val_det_loader is not None else float("nan"))
+        val_nme = nme_detector if select_on == "detector" else nme_canonical  # selection metric
         lr = optimizer.param_groups[0]["lr"]
         if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             scheduler.step(val_nme)
         else:
             scheduler.step()
-        for k, v in zip(history, (epoch + 1, train_loss, val_loss, val_nme, lr, time.time() - t0)):
+        for k, v in zip(history, (epoch + 1, train_loss, val_loss, val_nme, lr, time.time() - t0,
+                                  nme_canonical, nme_detector)):
             history[k].append(v)
 
         improved = val_nme < best_nme - 1e-6
@@ -227,8 +247,9 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
             "history": history, "epoch": epoch + 1, "best_nme": best_nme, "best_epoch": best_epoch,
             "bad_epochs": bad_epochs, "torch_rng": torch.get_rng_state(),
         }, last_path)
-        log.info("epoch %3d/%d  train %.5f  val %.5f  val NME %.4f%s  lr %.1e  %.0fs",
-                 epoch + 1, epochs, train_loss, val_loss, val_nme, " *" if improved else "", lr,
+        log.info("epoch %3d/%d  train %.5f  val %.5f  val NME %.4f%s%s  lr %.1e  %.0fs",
+                 epoch + 1, epochs, train_loss, val_loss, val_nme, " *" if improved else "",
+                 f"  (canonical {nme_canonical:.4f})" if select_on == "detector" else "", lr,
                  time.time() - t0)
         if bad_epochs >= patience:
             log.info("Early stopping: no validation improvement for %d epochs", patience)

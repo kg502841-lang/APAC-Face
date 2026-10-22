@@ -36,13 +36,17 @@ The committed checkpoints were trained with PyTorch 2.6.0 (CUDA 12.4) and evalua
 | Baseline | 7.28% | 5.62% | 17.04% | 0.385 | 3.25 | - |
 | Augmented (ablation) | 6.75% | 5.58% | 13.24% | 0.387 | 3.07 | 7.3% |
 | **Proposed** | **6.40%** | **5.38%** | **11.84%** | **0.408** | **2.93** | **12.1%** |
+| Detector-robust (deployed) | 6.49% | 5.40% | 12.08% | 0.405 | 2.96 | 10.9% |
 
 - **Proposed vs baseline:** mean NME drops by 0.88 points (paired bootstrap 95% CI 0.77 to 1.00; none of the
   2,000 bootstrap resamples showed no gain, i.e. p < 0.0005). The failure rate falls from 17.0% to 11.8%.
 - **Where the gain comes from:** augmentation alone gives 7.3%. Attribute-balanced sampling adds a further
   5.2% over augmentation (0.35 points, 95% CI 0.30 to 0.40), so both parts contribute.
-- **Latency:** 12.4 ms median per face on the GPU, 21.5 ms on the CPU (batch 1, 224x224, fp32). All three
-  models share the architecture, so their latency is identical.
+- **Latency:** about 10.6 ms median per face on the GPU and 21–22 ms on the CPU (batch 1, 224x224, fp32). All
+  models share the architecture, so their latency is the same.
+- **Detector-robust** is the proposed recipe trained on detector-style crops (see below). On this standard
+  annotated-crop protocol it is marginally behind *Proposed*. It is the deployed model because it is better
+  whenever a face detector supplies the box.
 - Each model was trained once (seed 42). The bootstrap covers test-set sampling, not seed-to-seed variance.
 
 ![NME comparison](results/nme_comparison.png)
@@ -56,10 +60,14 @@ MediaPipe detected 2,267 of 2,500 faces (90.7%); every number below uses those 2
 
 | Method | NME, 68 pts | Inner face (no jaw) | Mean Euclidean Error | Failure rate (NME > 10%) | Points > 8% |
 |---|---|---|---|---|---|
+| Method | NME, 68 pts | Inner face (no jaw) | Mean Euclidean Error | Failure rate (NME > 10%) | Points > 8% |
+|---|---|---|---|---|---|
 | Google MediaPipe | 8.44% | 6.44% | 6.14 px | 21.2% | 32.3% |
 | MediaPipe, offset-corrected | 7.28% | **5.46%** | 5.16 px | 17.7% | 24.9% |
-| **APAC-Face, same face location as MediaPipe** | 6.60% | 5.92% | 4.88 px | 9.3% | 22.6% |
-| APAC-Face, standard WFLW crop | **5.69%** | 5.22% | **4.32 px** | **6.5%** | **20.8%** |
+| **Detector-robust, same face location as MediaPipe** (deployed) | 6.51% | 5.85% | 4.79 px | 8.8% | 22.0% |
+| Proposed, same face location as MediaPipe | 6.60% | 5.92% | 4.88 px | 9.3% | 22.6% |
+| Proposed, standard WFLW crop | **5.69%** | 5.22% | **4.32 px** | **6.5%** | **20.8%** |
+| Detector-robust, standard WFLW crop | 5.74% | 5.24% | 4.34 px | 7.0% | 21.0% |
 
 - **Same face location** is the fair head-to-head and what the web app runs: our crop is built from MediaPipe's own
   detection (a 3-number box mapping learned on WFLW training faces, one pass). The standard WFLW protocol instead
@@ -67,24 +75,47 @@ MediaPipe detected 2,267 of 2,500 faces (90.7%); every number below uses those 2
 - **Offset-corrected MediaPipe** gives MediaPipe its best case. Its mesh follows a different landmark convention
   from manual annotation (most visibly on the jaw). So the median per-point offset to ground truth, in an
   eye-aligned frame, is learned on 1,914 WFLW *training* faces and added to its test predictions.
-- **Against MediaPipe as shipped**, APAC-Face is better everywhere: NME −21.8% with the same face location
-  (95% CI of the drop 1.74–1.93 points), −32.6% with the standard crop. Inner-face error is also lower (−8.1% and
-  −18.9%, both p < 0.0005).
-- **Against offset-corrected MediaPipe**, APAC-Face is still better on all 68 points (−9.3% with the same face
-  location, CI 0.57–0.77 points). The gain comes from the jaw line (8.64% vs 12.71%). **On the inner face points
-  the corrected MediaPipe is better** with the same face location (5.46% vs 5.92%, significant). With the
-  standard crop the two are statistically tied (−4.4%, p = 0.19).
-- **Caveat:** APAC-Face was trained on WFLW's annotation convention, which favours it on this test set. The gap
-  between "same face location" and "standard crop" (6.60% vs 5.69%) shows that a detector-robust model is the
-  next improvement.
+- **Against MediaPipe as shipped**, the deployed model is better everywhere: NME −22.9% with the same face
+  location (95% CI of the drop 1.84–2.02 points), mean error 4.79 vs 6.14 px, and failure rate 8.8% vs 21.2%.
+  Inner-face error is also lower (−9.2%, p < 0.0005). With the standard crop, *Proposed* is −32.6%.
+- **Against offset-corrected MediaPipe**, the deployed model is still better on all 68 points (−10.5% with the
+  same face location, CI 0.67–0.86 points). The gain comes from the jaw line (8.48% vs 12.71%) and the eyebrows.
+  **On the inner face points the corrected MediaPipe is better** with the same face location (5.46% vs 5.85%,
+  significant). With the standard crop the two are statistically tied (−4.0%, p = 0.24).
+- **Caveat:** APAC-Face was trained on WFLW's annotation convention, which favours it on this test set.
 
-| Region (normalised error) | MediaPipe | MediaPipe corrected | APAC-Face, same location |
+| Region (normalised error) | MediaPipe | MediaPipe corrected | Detector-robust, same location |
 |---|---|---|---|
-| Jawline | 14.43% | 12.71% | **8.64%** |
-| Eyebrows | 8.98% | 6.87% | **6.79%** |
-| Nose | 5.54% | **4.99%** | 5.29% |
-| Eyes | 5.35% | **4.70%** | 5.19% |
-| Mouth | 6.24% | **5.43%** | 6.22% |
+| Jawline | 14.43% | 12.71% | **8.48%** |
+| Eyebrows | 8.98% | 6.87% | **6.71%** |
+| Nose | 5.54% | **4.99%** | 5.22% |
+| Eyes | 5.35% | **4.70%** | 5.15% |
+| Mouth | 6.24% | **5.43%** | 6.13% |
+
+### Detector-robust model (training on MediaPipe-style crops)
+
+The standard WFLW protocol crops each face around its annotated landmarks, which no real detector can do. With a
+detector's box instead, *Proposed*'s NME rises from 5.69% to 6.60%. To shrink that gap, `robust` is trained with the
+same recipe as *Proposed* (augmentation + balanced sampling, 60 epochs), with two changes:
+
+- **Training crops:** for half of the training samples, the crop starts from the box the deployed pipeline
+  builds from MediaPipe's detection on that training image (`python -m src.mediapipe_baseline --export-boxes`).
+  The usual random jitter is applied on top. Training faces MediaPipe misses (4%) get the annotated box shifted
+  by a randomly drawn real MediaPipe box error.
+- **Checkpoint selection:** the saved epoch is chosen on MediaPipe-seeded validation crops, not on annotated ones.
+
+| WFLW validation | Annotated crop (715 faces) | MediaPipe crop (715) | Haar crop + 2 refinements, Python app (511 Haar detected) |
+|---|---|---|---|
+| Proposed | 5.32% | 6.07% | 5.11% |
+| **Detector-robust** | 5.33% | **5.95%** | **4.93%** |
+
+On the test set, under the deployment condition, it beats *Proposed* by 1.4% (6.51% vs 6.60% NME, 95% CI of the
+drop 0.05–0.13 points). On the annotated-crop protocol it is marginally behind (98-point NME 6.49% vs 6.40%). The
+gain is real but small. MediaPipe's box errors are mostly within the existing augmentation range: median shift
+≈ 0, the middle 90% within about ±3.5% shift and 0.88–1.08× scale, and only 12% outside the ±5% / ±10% jitter.
+So most of the remaining gap is information the annotated crop leaks,
+not a training-distribution mismatch. Because it wins with both MediaPipe and Haar boxes, `robust` is the deployed
+model (`inference.default_model` and `inference.web_model`).
 
 ![MediaPipe comparison](results/mediapipe_comparison.png)
 
@@ -204,6 +235,7 @@ validation NME), mixed precision, seed 42 and a 60-epoch budget. Only the traini
 | `baseline` | none | uniform | standard fine-tuning baseline |
 | `augmented` | flip (with left/right index remapping), rotation +/-20 deg, scale +/-10%, shift +/-5%, brightness/contrast +/-25%, blur, grayscale, synthetic occlusion | uniform | ablation: effect of augmentation alone |
 | `proposed` | same as `augmented` | attribute-balanced | full method |
+| `robust` | same as `augmented`, half of the crops from MediaPipe-style boxes | attribute-balanced | deployed model; checkpoint chosen on MediaPipe-seeded validation |
 
 Attribute-balanced sampling up-weights faces with rare WFLW conditions: each attribute gives a face the
 weight 0.5 / P(its value), weights are averaged over the six attributes, and the average is raised to the
@@ -295,6 +327,9 @@ If the files are missing, every command prints the expected layout instead of cr
 python -m src.train --experiment baseline
 python -m src.train --experiment augmented
 python -m src.train --experiment proposed
+python -m src.mediapipe_baseline                       # once: learns MediaPipe's box mapping (needs mediapipe)
+python -m src.mediapipe_baseline --export-boxes        # MediaPipe-style boxes, needed by the next run
+python -m src.train --experiment robust                # deployed model
 python -m src.train --experiment proposed --resume      # continue an interrupted run
 python -m src.train --experiment baseline --smoke       # 2-epoch pipeline check
 ```
@@ -349,7 +384,7 @@ and About.
 Single-image command line:
 
 ```bash
-python -m src.inference --image face.jpg --model proposed --out results/predictions/face.png
+python -m src.inference --image face.jpg --out results/predictions/face.png   # deployed model (robust)
 ```
 
 ### Faceify web app (browser, both models on-device)
@@ -357,8 +392,9 @@ python -m src.inference --image face.jpg --model proposed --out results/predicti
 `web/` is the Faceify landmark-analysis site (originally `D:\AntiPro`), with the same sections, design and
 features. Two things changed:
 
-- **"Optimized for Diverse Faces" is now the trained APAC-Face network**, running in the browser through ONNX
-  Runtime Web (`web/models/apac_proposed.onnx`). It used to be MediaPipe remapped to 68 points.
+- **"Optimized for Diverse Faces" is now the trained APAC-Face network** (the deployed detector-robust model),
+  running in the browser through ONNX Runtime Web (`web/models/apac_face.onnx`). It used to be MediaPipe
+  remapped to 68 points.
 - **The baseline is Google MediaPipe Face Landmarker** (`@mediapipe/tasks-vision`), loading the same
   `face_landmarker.task` file the Python benchmark scores. It replaces the deprecated FaceMesh script.
 
@@ -379,10 +415,14 @@ needs internet access for the ONNX Runtime and MediaPipe scripts (jsDelivr CDN).
 - **Ground truth is real only.** The original app derived every sample's "ground truth" from one 68-point
   template face (`BASE_TEMPLATE_68`), and generated it for any unannotated image too. Its error numbers measured
   the distance to a template, not to the real landmarks. That code is gone.
-- **Verified:** for the same image and crop, the browser model and the PyTorch model differ by 0.14 px on average
-  (0.35 px max, face with a 111 px inter-ocular distance). On the 70-face WFLW gallery, most of it the hardest
-  challenge conditions, APAC-Face beat MediaPipe on 54 of the 58 faces MediaPipe detected: NME 8.88% vs 10.74%,
-  mean error 9.20 vs 11.01 px, maximum error 21.5 vs 34.4 px.
+- **Verified:** for the same image and crop, the browser model and the PyTorch model differ by 0.11 px on average
+  (0.24 px max, face with a 111 px inter-ocular distance). On the 70-face WFLW gallery, most of it the hardest
+  challenge conditions, APAC-Face beat MediaPipe on 53 of the 58 faces MediaPipe detected:
+
+  | 58 gallery faces, in the browser | Mean Euclidean Error | NME | Maximum Landmark Error | Failure Rate (>8% NME) |
+  |---|---|---|---|---|
+  | Google MediaPipe | 11.01 px | 10.74% | 34.4 px | 39.5% |
+  | **APAC-Face** | **9.06 px** | **8.75%** | **20.8 px** | **28.5%** |
 - **Live mode** tracks the face from frame to frame, with MediaPipe re-checking every 15 frames. Our model runs in
   about 60 ms per frame on the CPU (WebAssembly, one thread), about 16 FPS. When MediaPipe finds no face on a
   photo, APAC-Face runs on a centred crop with two refinement passes and says so.
@@ -469,8 +509,8 @@ under augmentation, the metrics, the model and checkpoints, inference, the API, 
 - **MediaPipe comparison across conventions.** MediaPipe's mesh vertices are not WFLW annotation points, so its
   raw numbers include a labelling-style gap. The offset-corrected row removes most of it. APAC-Face has a home
   advantage on WFLW. Its lead over corrected MediaPipe comes from the jaw line and eyebrows, not the inner face.
-- **Detector box gap.** With a detector's box instead of the annotated crop, APAC-Face's NME rises from 5.69%
-  to 6.60%. Training on detector-style crops should close part of that gap.
+- **Detector box gap.** With a detector's box instead of the annotated crop, NME rises from about 5.7% to 6.5%.
+  Training on MediaPipe-style crops (the deployed `robust` model) closed only 0.09 points of it.
 - **Weak face detector.** The Haar detector is frontal-only. When it misses a face, the image is treated as a
   centred face crop, and the dashboard says so.
 

@@ -544,7 +544,8 @@
     const agree = state.datasetManager && state.datasetManager.calculateAgreement(landmarksOf('baseline'), landmarksOf('apac'));
     if (bm) {
       const B = bm.methods.mediapipe.detected_faces;
-      const A = (bm.methods.proposed_mp_located || bm.methods.proposed).detected_faces;
+      const web = state.benchmark.web_model || 'proposed';
+      const A = (bm.methods[`${web}_mp_located`] || bm.methods[web]).detected_faces;
       UI.gtCompareBody.innerHTML = `
         <tr><td>Mean Euclidean Error (benchmark)</td><td>${B.mean_error_px.toFixed(2)} px</td><td class="fcf-win">${A.mean_error_px.toFixed(2)} px</td></tr>
         <tr><td>NME, 68 points (benchmark)</td><td>${(B.nme * 100).toFixed(2)}%</td><td class="fcf-win">${(A.nme * 100).toFixed(2)}%</td></tr>
@@ -582,10 +583,11 @@
       return;
     }
     const M = bm.methods;
+    const web = state.benchmark.web_model || 'proposed';        // the model this page runs
     const mp = M.mediapipe.detected_faces;
     const mc = M.mediapipe_calibrated.detected_faces;
-    const std = M.proposed.detected_faces;                       // standard WFLW protocol (ground-truth crop)
-    const locKey = M.proposed_mp_located ? 'proposed_mp_located' : 'proposed';
+    const std = M[web].detected_faces;                           // standard WFLW protocol (ground-truth crop)
+    const locKey = M[`${web}_mp_located`] ? `${web}_mp_located` : web;
     const ap = M[locKey].detected_faces;                         // same face location as MediaPipe (what this page runs)
     const cmp = bm.comparison[`${locKey}_vs_mediapipe`];
     const cmpCal = bm.comparison[`${locKey}_vs_mediapipe_calibrated`];
