@@ -1,0 +1,9 @@
+{
+  "side_ratio": 1.025378495825119,
+  "dx": -0.0011873806224149816,
+  "dy": 0.14588324578253775,
+  "matched": 562,
+  "tried": 800,
+  "detection_rate": 0.7025,
+  "source": "WFLW train, Haar frontalface_default, median of matched faces"
+}

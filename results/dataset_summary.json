@@ -1,0 +1,90 @@
+{
+  "settings": {
+    "version": 1,
+    "input_size": 224,
+    "box_scale": 1.2,
+    "cache_expand": 1.5,
+    "cache_size": 336,
+    "val_fraction": 0.1,
+    "seed": 42
+  },
+  "counts": {
+    "train": {
+      "faces": 6785,
+      "skipped": 0,
+      "images": 4784
+    },
+    "val": {
+      "faces": 715,
+      "skipped": 0,
+      "images": 532
+    },
+    "test": {
+      "faces": 2500,
+      "skipped": 0,
+      "images": 2118
+    }
+  },
+  "attribute_prevalence": {
+    "train": {
+      "pose": 0.03537214443625645,
+      "expression": 0.023876197494473103,
+      "illumination": 0.20088430361090642,
+      "makeup": 0.010611643330876934,
+      "occlusion": 0.17877671333824613,
+      "blur": 0.18585114222549742
+    },
+    "val": {
+      "pose": 0.03076923076923077,
+      "expression": 0.027972027972027972,
+      "illumination": 0.22937062937062938,
+      "makeup": 0.009790209790209791,
+      "occlusion": 0.17902097902097902,
+      "blur": 0.2083916083916084
+    },
+    "test": {
+      "pose": 0.1304,
+      "expression": 0.1256,
+      "illumination": 0.2792,
+      "makeup": 0.0824,
+      "occlusion": 0.2944,
+      "blur": 0.3092
+    }
+  },
+  "test_subset_check": {
+    "pose": {
+      "from_attribute_flags": 326,
+      "official_list": 326,
+      "match": true
+    },
+    "expression": {
+      "from_attribute_flags": 314,
+      "official_list": 314,
+      "match": true
+    },
+    "illumination": {
+      "from_attribute_flags": 698,
+      "official_list": 698,
+      "match": true
+    },
+    "makeup": {
+      "from_attribute_flags": 206,
+      "official_list": 206,
+      "match": true
+    },
+    "occlusion": {
+      "from_attribute_flags": 736,
+      "official_list": 736,
+      "match": true
+    },
+    "blur": {
+      "from_attribute_flags": 773,
+      "official_list": 773,
+      "match": true
+    }
+  },
+  "annotation_sha1": {
+    "list_98pt_rect_attr_train.txt": "1cba00d7bf275212765fbd22e5b9f7d3b68e0d27",
+    "list_98pt_rect_attr_test.txt": "fbd08e285e60a3f64c253787b74d0dffbe61ba8b"
+  }
+}

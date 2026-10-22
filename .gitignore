@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Datasets (licensed for research use only - never commit images or annotations)
+data/*
+!data/README.md
+
+# Training state: resume checkpoints carry optimizer state and are large.
+# Final inference weights (checkpoints/<experiment>.pth) are committed on purpose.
+checkpoints/*_last.pth
+checkpoints/*_smoke*
+checkpoints/tmp/
+
+# Generated per-image prediction dumps, dataset face thumbnails (WFLW/FairFace imagery is not
+# ours to redistribute) and raw launcher captures
+results/predictions/
+results/dataset_samples.png
+results/*_smoke*
+results/logs/*.out
+results/logs/*.err
+
+# Editors / OS / local tooling
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Streamlit secrets
+.streamlit/secrets.toml

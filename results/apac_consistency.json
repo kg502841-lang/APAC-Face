@@ -1,0 +1,481 @@
+{
+  "generated": "2026-10-22 15:39:32",
+  "source": "APAC asian images.zip",
+  "image_sizes": {
+    "448x448": 2100
+  },
+  "jitter": {
+    "samples": 4,
+    "shift": 0.05,
+    "scale": 0.05
+  },
+  "disclaimer": "Per-group values are label-free consistency proxies (flip consistency and crop stability), NOT accuracy against ground-truth landmarks, because the APAC images carry no landmark annotations. Group labels come from the dataset's file names (annotator-provided demographic metadata), not from inference on facial appearance. Lower is better.",
+  "models": [
+    "baseline",
+    "augmented",
+    "proposed"
+  ],
+  "apac_groups": [
+    "East_Asian",
+    "Southeast_Asian",
+    "Indian"
+  ],
+  "groups": {
+    "East_Asian": {
+      "label": "East Asian",
+      "apac": true,
+      "images": 300,
+      "face_detection_rate": 0.8133333333333334,
+      "models": {
+        "baseline": {
+          "flip_consistency": 0.05911530742111305,
+          "flip_ci": [
+            0.05351529585562336,
+            0.06492961401453552
+          ],
+          "crop_stability": 0.04319440815908213,
+          "stability_ci": [
+            0.040735955829421674,
+            0.04566579579290313
+          ]
+        },
+        "augmented": {
+          "flip_consistency": 0.04389335327160855,
+          "flip_ci": [
+            0.03613289421214722,
+            0.0525596473123102
+          ],
+          "crop_stability": 0.021326330246714254,
+          "stability_ci": [
+            0.019178820003406146,
+            0.023643181914502442
+          ]
+        },
+        "proposed": {
+          "flip_consistency": 0.0438573378448685,
+          "flip_ci": [
+            0.03723571653982314,
+            0.05116956222034059
+          ],
+          "crop_stability": 0.021498839436098933,
+          "stability_ci": [
+            0.018941063304780983,
+            0.024434621886815874
+          ]
+        }
+      }
+    },
+    "Indian": {
+      "label": "South Asian (Indian)",
+      "apac": true,
+      "images": 300,
+      "face_detection_rate": 0.8866666666666667,
+      "models": {
+        "baseline": {
+          "flip_consistency": 0.052794310037667554,
+          "flip_ci": [
+            0.04804804461014768,
+            0.05795301967440172
+          ],
+          "crop_stability": 0.04102876905972759,
+          "stability_ci": [
+            0.039110028714096794,
+            0.04301700132526458
+          ]
+        },
+        "augmented": {
+          "flip_consistency": 0.03307810336817056,
+          "flip_ci": [
+            0.02698632642968247,
+            0.04090943780972155
+          ],
+          "crop_stability": 0.018839737304175895,
+          "stability_ci": [
+            0.01722435620908315,
+            0.020676770784465285
+          ]
+        },
+        "proposed": {
+          "flip_consistency": 0.034994658944196996,
+          "flip_ci": [
+            0.030503931270563046,
+            0.04018388879248717
+          ],
+          "crop_stability": 0.017987353388840954,
+          "stability_ci": [
+            0.01616357862475949,
+            0.02022916775107539
+          ]
+        }
+      }
+    },
+    "Southeast_Asian": {
+      "label": "Southeast Asian",
+      "apac": true,
+      "images": 300,
+      "face_detection_rate": 0.82,
+      "models": {
+        "baseline": {
+          "flip_consistency": 0.05889154989582797,
+          "flip_ci": [
+            0.05315578103368171,
+            0.06494244182870412
+          ],
+          "crop_stability": 0.042552877701818946,
+          "stability_ci": [
+            0.04050279167573899,
+            0.04449345134353886
+          ]
+        },
+        "augmented": {
+          "flip_consistency": 0.042879766713206965,
+          "flip_ci": [
+            0.03566028911061585,
+            0.05133671475465719
+          ],
+          "crop_stability": 0.02119586736895144,
+          "stability_ci": [
+            0.019107223561344047,
+            0.023400034462606224
+          ]
+        },
+        "proposed": {
+          "flip_consistency": 0.04110666538433482,
+          "flip_ci": [
+            0.034682590154814535,
+            0.048537155484004564
+          ],
+          "crop_stability": 0.01968872284516692,
+          "stability_ci": [
+            0.017655682775657624,
+            0.021695363367170407
+          ]
+        }
+      }
+    },
+    "Black": {
+      "label": "Black",
+      "apac": false,
+      "images": 300,
+      "face_detection_rate": 0.7533333333333333,
+      "models": {
+        "baseline": {
+          "flip_consistency": 0.06650762763805687,
+          "flip_ci": [
+            0.061158857904452205,
+            0.07197350767441094
+          ],
+          "crop_stability": 0.045718622400114935,
+          "stability_ci": [
+            0.04355127068779742,
+            0.04785174196430792
+          ]
+        },
+        "augmented": {
+          "flip_consistency": 0.04383321818895638,
+          "flip_ci": [
+            0.03709594603329121,
+            0.05102168774496142
+          ],
+          "crop_stability": 0.023034816750635703,
+          "stability_ci": [
+            0.020796837949814895,
+            0.025410150309209713
+          ]
+        },
+        "proposed": {
+          "flip_consistency": 0.046380367232486605,
+          "flip_ci": [
+            0.03845126049193399,
+            0.05525505037027566
+          ],
+          "crop_stability": 0.021087893031847972,
+          "stability_ci": [
+            0.018979802069525854,
+            0.023450629183556886
+          ]
+        }
+      }
+    },
+    "Latino_Hispanic": {
+      "label": "Latino / Hispanic",
+      "apac": false,
+      "images": 300,
+      "face_detection_rate": 0.8533333333333334,
+      "models": {
+        "baseline": {
+          "flip_consistency": 0.05796673669479788,
+          "flip_ci": [
+            0.052403437032053864,
+            0.06356122757323707
+          ],
+          "crop_stability": 0.041375094270333646,
+          "stability_ci": [
+            0.03882640539878048,
+            0.043932519029205044
+          ]
+        },
+        "augmented": {
+          "flip_consistency": 0.04105805890945097,
+          "flip_ci": [
+            0.03335770227348742,
+            0.05055309164143788
+          ],
+          "crop_stability": 0.0201587255531922,
+          "stability_ci": [
+            0.018163470987812617,
+            0.022340893436106853
+          ]
+        },
+        "proposed": {
+          "flip_consistency": 0.041303523347402615,
+          "flip_ci": [
+            0.034616498505813074,
+            0.04901858618525632
+          ],
+          "crop_stability": 0.019086046755934755,
+          "stability_ci": [
+            0.017021131130944316,
+            0.021341313872913204
+          ]
+        }
+      }
+    },
+    "Middle_Eastern": {
+      "label": "Middle Eastern",
+      "apac": false,
+      "images": 300,
+      "face_detection_rate": 0.8,
+      "models": {
+        "baseline": {
+          "flip_consistency": 0.06634989100818833,
+          "flip_ci": [
+            0.060110156155501804,
+            0.07261484027064094
+          ],
+          "crop_stability": 0.04733886605749527,
+          "stability_ci": [
+            0.04455157859778652,
+            0.050253617527273794
+          ]
+        },
+        "augmented": {
+          "flip_consistency": 0.058235788208742936,
+          "flip_ci": [
+            0.04565618466721692,
+            0.07346190436165004
+          ],
+          "crop_stability": 0.026848791409283878,
+          "stability_ci": [
+            0.02357661388015064,
+            0.030588843743782488
+          ]
+        },
+        "proposed": {
+          "flip_consistency": 0.05125095711089671,
+          "flip_ci": [
+            0.04340525226648121,
+            0.060239628588431515
+          ],
+          "crop_stability": 0.025351430700781444,
+          "stability_ci": [
+            0.022133603101130578,
+            0.029088683321257115
+          ]
+        }
+      }
+    },
+    "White": {
+      "label": "White",
+      "apac": false,
+      "images": 300,
+      "face_detection_rate": 0.7666666666666667,
+      "models": {
+        "baseline": {
+          "flip_consistency": 0.06557324564394852,
+          "flip_ci": [
+            0.059577918344099694,
+            0.07210778508614749
+          ],
+          "crop_stability": 0.04537441364179055,
+          "stability_ci": [
+            0.042729212026577444,
+            0.04815579774277284
+          ]
+        },
+        "augmented": {
+          "flip_consistency": 0.04349800373893231,
+          "flip_ci": [
+            0.03766481139798028,
+            0.050647585899181044
+          ],
+          "crop_stability": 0.02233074155325691,
+          "stability_ci": [
+            0.02048532210911314,
+            0.024439969348643596
+          ]
+        },
+        "proposed": {
+          "flip_consistency": 0.04322095081365357,
+          "flip_ci": [
+            0.03706052214714388,
+            0.05098771547114786
+          ],
+          "crop_stability": 0.020812720068109532,
+          "stability_ci": [
+            0.018933584828744642,
+            0.02283601644972805
+          ]
+        }
+      }
+    }
+  },
+  "summary": {
+    "baseline": {
+      "apac_mean_flip_consistency": 0.056933722451536196,
+      "apac_worst_group": "East_Asian",
+      "apac_gap_flip_consistency": 0.006320997383445499,
+      "all_groups_gap_flip_consistency": 0.013713317600389317
+    },
+    "augmented": {
+      "apac_mean_flip_consistency": 0.03995040778432869,
+      "apac_worst_group": "East_Asian",
+      "apac_gap_flip_consistency": 0.01081524990343799,
+      "all_groups_gap_flip_consistency": 0.025157684840572375
+    },
+    "proposed": {
+      "apac_mean_flip_consistency": 0.039986220724466774,
+      "apac_worst_group": "East_Asian",
+      "apac_gap_flip_consistency": 0.008862678900671501,
+      "all_groups_gap_flip_consistency": 0.016256298166699712
+    }
+  },
+  "comparison": {
+    "East_Asian": {
+      "flip_improvement_pct": 25.810522251966106,
+      "flip_bootstrap": {
+        "mean_diff": 0.015257969576244554,
+        "ci_low": 0.00892112813726999,
+        "ci_high": 0.021052265732393906,
+        "p_value": 0.0,
+        "n": 300
+      },
+      "stability_improvement_pct": 50.22772541084453,
+      "stability_bootstrap": {
+        "mean_diff": 0.021695568722983203,
+        "ci_low": 0.019856921772511367,
+        "ci_high": 0.023560154422613173,
+        "p_value": 0.0,
+        "n": 300
+      }
+    },
+    "Indian": {
+      "flip_improvement_pct": 33.71509369242804,
+      "flip_bootstrap": {
+        "mean_diff": 0.017799651093470554,
+        "ci_low": 0.01391343841996665,
+        "ci_high": 0.021475528526119888,
+        "p_value": 0.0,
+        "n": 300
+      },
+      "stability_improvement_pct": 56.15916879530097,
+      "stability_bootstrap": {
+        "mean_diff": 0.023041415670886637,
+        "ci_low": 0.02161828646153056,
+        "ci_high": 0.024385500992919938,
+        "p_value": 0.0,
+        "n": 300
+      }
+    },
+    "Southeast_Asian": {
+      "flip_improvement_pct": 30.19938266687234,
+      "flip_bootstrap": {
+        "mean_diff": 0.017784884511493147,
+        "ci_low": 0.011044437688969387,
+        "ci_high": 0.023874700566559718,
+        "p_value": 0.0,
+        "n": 300
+      },
+      "stability_improvement_pct": 53.73116012709684,
+      "stability_bootstrap": {
+        "mean_diff": 0.02286415485665202,
+        "ci_low": 0.021455173085948142,
+        "ci_high": 0.024265943553919592,
+        "p_value": 0.0,
+        "n": 300
+      }
+    },
+    "Black": {
+      "flip_improvement_pct": 30.263085784844744,
+      "flip_bootstrap": {
+        "mean_diff": 0.02012726040557027,
+        "ci_low": 0.012649879106941327,
+        "ci_high": 0.02688315836798089,
+        "p_value": 0.0,
+        "n": 300
+      },
+      "stability_improvement_pct": 53.874609678101415,
+      "stability_bootstrap": {
+        "mean_diff": 0.02463072936826696,
+        "ci_low": 0.02272649230652799,
+        "ci_high": 0.02649709597994418,
+        "p_value": 0.0,
+        "n": 300
+      }
+    },
+    "Latino_Hispanic": {
+      "flip_improvement_pct": 28.746164261633645,
+      "flip_bootstrap": {
+        "mean_diff": 0.01666321334739526,
+        "ci_low": 0.010412779561942444,
+        "ci_high": 0.022625826737106152,
+        "p_value": 0.0,
+        "n": 300
+      },
+      "stability_improvement_pct": 53.87068696150467,
+      "stability_bootstrap": {
+        "mean_diff": 0.022289047514398894,
+        "ci_low": 0.020596068204264156,
+        "ci_high": 0.024251266771539423,
+        "p_value": 0.0,
+        "n": 300
+      }
+    },
+    "Middle_Eastern": {
+      "flip_improvement_pct": 22.756531575052993,
+      "flip_bootstrap": {
+        "mean_diff": 0.015098933897291621,
+        "ci_low": 0.008445311267278157,
+        "ci_high": 0.02103224085329566,
+        "p_value": 0.0,
+        "n": 300
+      },
+      "stability_improvement_pct": 46.446899108248715,
+      "stability_bootstrap": {
+        "mean_diff": 0.02198743535671383,
+        "ci_low": 0.0193502728320503,
+        "ci_high": 0.024604438609249574,
+        "p_value": 0.0,
+        "n": 300
+      }
+    },
+    "White": {
+      "flip_improvement_pct": 34.08752245033604,
+      "flip_bootstrap": {
+        "mean_diff": 0.022352294830294946,
+        "ci_low": 0.015763318988882627,
+        "ci_high": 0.028191061066385976,
+        "p_value": 0.0,
+        "n": 300
+      },
+      "stability_improvement_pct": 54.13115366643396,
+      "stability_bootstrap": {
+        "mean_diff": 0.02456169357368102,
+        "ci_low": 0.02278784450585954,
+        "ci_high": 0.02657553411872747,
+        "p_value": 0.0,
+        "n": 300
+      }
+    }
+  }
+}

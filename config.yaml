@@ -1,0 +1,99 @@
+# APAC-Face configuration. Relative paths resolve against the project root.
+seed: 42
+deterministic: false          # true = bit-reproducible cuDNN kernels (slower)
+
+paths:
+  wflw_root: data/WFLW        # must contain WFLW_images/ and WFLW_annotations/
+  cache_dir: data/cache       # pre-cropped faces written by `python -m src.dataset`
+  checkpoints: checkpoints
+  results: results
+  apac_source: data/APAC      # folder or .zip of images named {id}_{Group}.jpg
+
+data:
+  input_size: 224             # network input resolution (square)
+  box_scale: 1.2              # crop side = longest side of the landmark box x box_scale
+  cache_expand: 1.5           # cached crops keep extra margin so augmentation never sees black borders
+  val_fraction: 0.1           # split by image file, so faces of one photo never straddle train/val
+  num_workers: 3              # training loader only; each Windows worker commits ~1.3 GB
+
+model:
+  backbone: mobilenet_v2
+  weights: IMAGENET1K_V2      # torchvision ImageNet weights; null = random init (explicit opt-out)
+  hidden_dim: 512
+  dropout: 0.2
+
+train:
+  epochs: 60
+  batch_size: 32              # reduced automatically on GPUs with little VRAM
+  lr: 1.0e-4                  # backbone learning rate
+  head_lr_mult: 10.0          # the freshly initialised regression head learns 10x faster
+  weight_decay: 1.0e-4
+  loss: smooth_l1             # smooth_l1 | l1 | wing
+  smooth_l1_beta: 0.01        # coordinates are in [0, 1]; beta=1 would make the loss purely quadratic
+  scheduler: plateau          # plateau | cosine
+  plateau_factor: 0.5
+  plateau_patience: 3
+  early_stopping_patience: 10
+  amp: true                   # mixed precision on CUDA
+  grad_clip: 5.0
+
+augmentation:
+  flip_prob: 0.5              # horizontal flip with left/right landmark index remapping
+  rotation_deg: 20
+  scale_range: 0.10           # crop scale sampled in [1 - r, 1 + r]
+  translate: 0.05             # fraction of the crop side
+  brightness: 0.25
+  contrast: 0.25
+  blur_prob: 0.15
+  grayscale_prob: 0.10
+  occlusion_prob: 0.20        # random rectangle painted over the face (landmarks stay labelled)
+
+sampling:
+  # WFLW challenge attributes used as strata for balanced sampling.
+  attributes: [pose, expression, illumination, makeup, occlusion, blur]
+  power: 0.5                  # 0 = uniform sampling, 1 = full inverse-frequency weighting
+
+experiments:
+  baseline:
+    label: Baseline
+    description: ImageNet MobileNetV2 fine-tuned on WFLW with no augmentation and uniform sampling.
+    augment: false
+    balanced_sampling: false
+  augmented:
+    label: Augmented (ablation)
+    description: Baseline plus geometric and photometric augmentation; uniform sampling.
+    augment: true
+    balanced_sampling: false
+  proposed:
+    label: Proposed
+    description: Augmentation plus attribute-balanced sampling over WFLW challenge conditions.
+    augment: true
+    balanced_sampling: true
+
+eval:
+  baseline: baseline
+  proposed: proposed
+  failure_threshold: 0.10     # a face fails when its inter-ocular NME exceeds 10%
+  latency_runs: 100
+  bootstrap_samples: 2000
+
+inference:
+  default_model: proposed
+  refine_iterations: 2        # re-crop around the previous prediction, matching the training crop.
+                              # Tuned on WFLW val (detector boxes): 0 -> 5.98%, 1 -> 5.27%, 2 -> 5.11%, 3 -> 5.03% NME
+  max_upload_mb: 10
+
+apac:
+  per_group: 300              # images sampled per demographic group
+  jitter_samples: 4           # perturbed crops per image for the stability metric
+  jitter_shift: 0.05
+  jitter_scale: 0.05
+  apac_groups: [East_Asian, Southeast_Asian, Indian]
+  group_labels:
+    East_Asian: East Asian
+    Southeast_Asian: Southeast Asian
+    Indian: South Asian (Indian)
+    White: White
+    Black: Black
+    Latino_Hispanic: Latino / Hispanic
+    Middle_Eastern: Middle Eastern

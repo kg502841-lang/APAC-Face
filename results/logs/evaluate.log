@@ -1,0 +1,5 @@
+﻿15:07:37 | INFO    | evaluate | baseline   NME 7.28%  FR@10% 17.04%  AUC 0.3850  MAE 3.25 px  GPU 12.40 ms
+15:07:53 | INFO    | evaluate | augmented  NME 6.75%  FR@10% 13.24%  AUC 0.3866  MAE 3.07 px  GPU 12.41 ms
+15:08:10 | INFO    | evaluate | proposed   NME 6.40%  FR@10% 11.84%  AUC 0.4076  MAE 2.93 px  GPU 12.38 ms
+15:08:12 | INFO    | evaluate | Proposed vs baseline: NME 7.279% -> 6.399% (12.10% relative), 95% CI of NME drop [0.771, 1.002] pts, p=0.0000
+15:08:12 | INFO    | evaluate | Wrote metrics.json, comparison.csv, subgroup_metrics.csv and figures to D:\Projects\New Industrial\results

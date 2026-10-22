@@ -1,0 +1,15 @@
+15:21:34 | INFO    | apac_eval | Black            300 images done (127s)
+15:24:07 | INFO    | apac_eval | East_Asian       300 images done (280s)
+15:35:00 | INFO    | apac_eval | Indian           300 images done (933s)
+15:36:09 | INFO    | apac_eval | Latino_Hispanic  300 images done (1002s)
+15:37:17 | INFO    | apac_eval | Middle_Eastern   300 images done (1070s)
+15:38:24 | INFO    | apac_eval | Southeast_Asian  300 images done (1136s)
+15:39:31 | INFO    | apac_eval | White            300 images done (1204s)
+15:39:32 | INFO    | apac_eval | East Asian               n=300 det=81%  flip: baseline 5.91%  augmented 4.39%  proposed 4.39%
+15:39:32 | INFO    | apac_eval | South Asian (Indian)     n=300 det=89%  flip: baseline 5.28%  augmented 3.31%  proposed 3.50%
+15:39:32 | INFO    | apac_eval | Southeast Asian          n=300 det=82%  flip: baseline 5.89%  augmented 4.29%  proposed 4.11%
+15:39:32 | INFO    | apac_eval | Black                    n=300 det=75%  flip: baseline 6.65%  augmented 4.38%  proposed 4.64%
+15:39:32 | INFO    | apac_eval | Latino / Hispanic        n=300 det=85%  flip: baseline 5.80%  augmented 4.11%  proposed 4.13%
+15:39:32 | INFO    | apac_eval | Middle Eastern           n=300 det=80%  flip: baseline 6.63%  augmented 5.82%  proposed 5.13%
+15:39:32 | INFO    | apac_eval | White                    n=300 det=77%  flip: baseline 6.56%  augmented 4.35%  proposed 4.32%
+15:39:32 | INFO    | apac_eval | Wrote apac_consistency.json/.csv, apac_per_image.csv, apac_group_analysis.png

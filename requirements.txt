@@ -1,0 +1,27 @@
+# Install PyTorch with CUDA first, from the PyTorch index (pick the CUDA build for your driver):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+# CPU-only machines can use: pip install torch torchvision
+torch>=2.4
+torchvision>=0.19
+
+# opencv-python 5.x no longer bundles the Haar face detector used for uploaded images.
+opencv-python>=4.8,<5
+numpy>=2.0
+pandas>=2.0
+matplotlib>=3.8
+plotly>=5.20
+pillow>=10.0
+pyyaml>=6.0
+
+# Inference API
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+
+# Dashboard
+streamlit>=1.50
+requests>=2.31
+
+# Tests
+pytest>=8.0
+httpx>=0.27
