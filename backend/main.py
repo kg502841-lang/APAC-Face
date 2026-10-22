@@ -24,6 +24,7 @@ from typing import Any
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src import __version__
 from src.inference import (LandmarkPredictor, annotate, available_checkpoints, decode_image,
@@ -70,6 +71,11 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+# The Faceify web app (static, runs both models in the browser) is served at /web/.
+_WEB_DIR = resolve_path("web")
+if (_WEB_DIR / "index.html").is_file():
+    app.mount("/web", StaticFiles(directory=_WEB_DIR, html=True), name="web")
 
 
 def _default_model() -> str | None:

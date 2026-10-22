@@ -54,7 +54,8 @@ def bar_panels(path: Path, models: list[str], labels: list[str],
                panels: list[tuple[str, list[float], str]], title: str) -> Path:
     """One small bar chart per metric (no dual axes). panels = (title, values, value format)."""
     _setup()
-    fig, axes = plt.subplots(1, len(panels), figsize=(3.6 * len(panels), 3.6))
+    many = len(models) > 4
+    fig, axes = plt.subplots(1, len(panels), figsize=(max(3.6, 0.95 * len(models)) * len(panels), 3.8))
     axes = np.atleast_1d(axes)
     colors = [model_color(m, models) for m in models]
     for ax, (ptitle, values, fmt) in zip(axes, panels):
@@ -65,7 +66,7 @@ def bar_panels(path: Path, models: list[str], labels: list[str],
         for xi, v in zip(x, vals):
             if np.isfinite(v):
                 ax.text(xi, v + top * 0.02, fmt.format(v), ha="center", va="bottom", color=INK, fontsize=9)
-        ax.set_xticks(x, labels, rotation=0)
+        ax.set_xticks(x, labels, rotation=0, fontsize=8.5 if many else 10)
         ax.set_ylim(0, top * 1.18)
         ax.set_title(ptitle, loc="left")
         _grid(ax)

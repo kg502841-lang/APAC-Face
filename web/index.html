@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faceify | AI Facial Landmark Analysis — APAC Diversity Research</title>
+  
+  <!-- Modern Clean Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Scoped Application Stylesheet -->
+  <link rel="stylesheet" href="./styles/main.css">
+  
+  <!-- ONNX Runtime Web: runs the trained APAC-Face model on-device. MediaPipe Tasks Vision is
+       imported by js/detectors/mediapipe-detector.js. -->
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <!-- Root Scoped Container for Faceify Website Integration -->
+  <div id="faceify-landmark-app">
+
+    <!-- ==============================================================
+         1. NAVIGATION BAR
+         ============================================================== -->
+    <header class="fcf-nav">
+      <div class="fcf-container fcf-nav-inner">
+        <a href="#home" class="fcf-logo">
+          <div class="fcf-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#001738" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 3H5a2 2 0 0 0-2 2v4m0 6v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4m0-6V5a2 2 0 0 0-2-2h-4"></path>
+              <circle cx="9" cy="10" r="1.5" fill="#001738"></circle>
+              <circle cx="15" cy="10" r="1.5" fill="#001738"></circle>
+              <path d="M9.5 15a3.5 3.5 0 0 0 5 0"></path>
+            </svg>
+          </div>
+          <div>
+            <span class="fcf-logo-text">Faceify</span>
+            <span class="fcf-logo-pill">APAC Research</span>
+          </div>
+        </a>
+
+        <ul class="fcf-nav-links" id="fcf-nav-links">
+          <li><a href="#home" class="fcf-nav-link active">Home</a></li>
+          <li><a href="#features" class="fcf-nav-link">Features</a></li>
+          <li><a href="#fcf-landmark-studio" class="fcf-nav-link">AI Analysis</a></li>
+          <li><a href="#benchmark-results" class="fcf-nav-link">Benchmark</a></li>
+          <li><a href="#apac-model" class="fcf-nav-link">APAC Upgrade</a></li>
+          <li><a href="#why-it-matters" class="fcf-nav-link">About</a></li>
+          <li><a href="#contact" class="fcf-nav-link">Contact</a></li>
+        </ul>
+
+        <div class="fcf-nav-cta-wrap">
+          <a href="#consultation-cta" class="fcf-btn fcf-btn-primary fcf-btn-sm">Book Consultation</a>
+          <button class="fcf-mobile-toggle" id="fcf-mobile-toggle" aria-label="Toggle navigation menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==============================================================
+         2. HERO SECTION
+         ============================================================== -->
+    <section class="fcf-hero" id="home">
+      <div class="fcf-container fcf-hero-grid">
+        <div class="fcf-hero-content">
+          <div class="fcf-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            APAC-Diverse Facial Landmark Detection
+          </div>
+          <h1 class="fcf-title-lg">
+            More Faces. More Accuracy. <br>
+            <span class="fcf-cyan-text">More Inclusive AI.</span>
+          </h1>
+          <p class="fcf-subtitle" style="margin: 0 0 24px 0;">
+            Faceify's facial landmark technology helps analyze facial structure before consultation. Our APAC-focused research explores how diverse facial data can improve landmark localization across East Asian, South Asian, and Southeast Asian face types.
+          </p>
+          <div class="fcf-hero-actions">
+            <a href="#fcf-landmark-studio" class="fcf-btn fcf-btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Try Live Detection
+            </a>
+            <a href="#why-it-matters" class="fcf-btn fcf-btn-secondary">
+              Learn More
+            </a>
+          </div>
+        </div>
+
+        <div class="fcf-hero-preview">
+          <div class="fcf-hero-canvas-wrap">
+            <canvas id="fcf-hero-canvas" class="fcf-hero-canvas"></canvas>
+            <div class="fcf-hero-scan-line"></div>
+          </div>
+          <div class="fcf-hero-overlay-tag">
+            <strong>468-Point Mesh Scanner</strong> &bull; Real-Time Client Localization
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         3. TRUST & PRIVACY BADGES
+         ============================================================== -->
+    <section class="fcf-trust-bar">
+      <div class="fcf-container fcf-trust-grid">
+        <div class="fcf-trust-item">
+          <div class="fcf-trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="fcf-trust-title">AI-Powered</div>
+            <div class="fcf-trust-desc">Trained 98-point landmark model</div>
+          </div>
+        </div>
+
+        <div class="fcf-trust-item">
+          <div class="fcf-trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <div>
+            <div class="fcf-trust-title">100% On-Device</div>
+            <div class="fcf-trust-desc">Client-side WebAssembly execution</div>
+          </div>
+        </div>
+
+        <div class="fcf-trust-item">
+          <div class="fcf-trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="fcf-trust-title">Privacy First</div>
+            <div class="fcf-trust-desc">No video or photos leave your browser</div>
+          </div>
+        </div>
+
+        <div class="fcf-trust-item">
+          <div class="fcf-trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="fcf-trust-title">APAC Inclusive</div>
+            <div class="fcf-trust-desc">Checked across APAC demographic groups</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         4. LIVE FACIAL LANDMARK DEMO (STUDIO)
+         ============================================================== -->
+    <section class="fcf-studio-section" id="fcf-landmark-studio">
+      <div class="fcf-container">
+        <div class="fcf-section-header">
+          <div class="fcf-badge">Interactive Landmark Studio</div>
+          <h2 class="fcf-title-md">Try Facial Landmark Detection</h2>
+          <p class="fcf-subtitle">See how facial landmarks are detected in real time using client-side neural vision.</p>
+        </div>
+
+        <!-- Model status (both models load and run on this device) -->
+        <div id="fcf-model-status" class="fcf-model-status fcf-model-status-amber">Loading models ...</div>
+
+        <div class="fcf-studio-card">
+          <!-- Studio Header & Controls -->
+          <div class="fcf-studio-header">
+            <!-- Source Selector Tabs -->
+            <div class="fcf-tabs">
+              <button class="fcf-tab-btn active" id="fcf-tab-upload">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Upload Photo
+              </button>
+              <button class="fcf-tab-btn" id="fcf-tab-webcam">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 7l-7 5 7 5V7z"></path>
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                </svg>
+                Use Webcam
+              </button>
+            </div>
+
+            <!-- Model Selection Bar -->
+            <div class="fcf-model-select-bar">
+              <span style="font-size: 0.85rem; font-weight: 600; color: var(--faceify-text-muted);">Model:</span>
+              <button class="fcf-model-pill" id="fcf-model-btn-baseline" title="Google MediaPipe Face Landmarker (478-point mesh)">
+                Google MediaPipe (Baseline)
+              </button>
+              <button class="fcf-model-pill active" id="fcf-model-btn-apac" title="Trained APAC-Face model (98 points)">
+                APAC-Face (Trained)
+              </button>
+
+              <!-- Compare Toggle -->
+              <label class="fcf-compare-toggle" style="margin-left: 12px;">
+                <div class="fcf-switch">
+                  <input type="checkbox" id="fcf-compare-checkbox">
+                  <span class="fcf-slider"></span>
+                </div>
+                <span>Compare Models</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Studio Body Layout -->
+          <div class="fcf-studio-body">
+            <!-- Left Viewport -->
+            <div class="fcf-viewport-area">
+              <!-- Single Canvas Mode -->
+              <div class="fcf-canvas-stage" id="fcf-stage-single">
+                <canvas id="fcf-main-canvas" class="fcf-primary-canvas" width="448" height="448"></canvas>
+                <video id="fcf-video-stream" class="fcf-hidden-video" playsinline muted></video>
+                <img id="fcf-image-holder" class="fcf-hidden-img" alt="Input source">
+              </div>
+
+              <!-- Side-by-Side Compare Mode -->
+              <div class="fcf-compare-stage" id="fcf-stage-compare">
+                <div class="fcf-compare-panel">
+                  <div class="fcf-compare-label">
+                    <span>Google MediaPipe (Baseline)</span>
+                    <span class="fcf-badge" style="margin:0; padding:2px 8px; font-size:0.7rem;">478 pts</span>
+                  </div>
+                  <canvas id="fcf-compare-canvas-baseline" class="fcf-compare-canvas"></canvas>
+                </div>
+                <div class="fcf-compare-panel">
+                  <div class="fcf-compare-label">
+                    <span>APAC-Face (Trained Model)</span>
+                    <span class="fcf-badge fcf-badge-amber" style="margin:0; padding:2px 8px; font-size:0.7rem;">98 pts</span>
+                  </div>
+                  <canvas id="fcf-compare-canvas-apac" class="fcf-compare-canvas"></canvas>
+                </div>
+              </div>
+
+              <!-- Drag and Drop Overlay for Upload Mode -->
+              <div class="fcf-upload-dropzone" id="fcf-dropzone">
+                <div class="fcf-upload-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                </div>
+                <h4 style="margin: 0 0 6px 0; color: #FFF;">Drag &amp; Drop Face Image Here</h4>
+                <p style="font-size: 0.85rem; color: var(--faceify-text-muted); margin: 0 0 16px 0;">
+                  Supports JPG, JPEG, PNG &bull; Processed 100% locally
+                </p>
+                <button class="fcf-btn fcf-btn-primary fcf-btn-sm" type="button">Browse Local Files</button>
+                <input type="file" id="fcf-file-input" accept="image/jpeg,image/png,image/jpg" style="display: none;">
+              </div>
+
+              <!-- Floating Viewport Controls -->
+              <div class="fcf-viewport-controls">
+                <button class="fcf-icon-btn" id="fcf-btn-zoom-in" title="Zoom In">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                  </svg>
+                </button>
+                <button class="fcf-icon-btn" id="fcf-btn-zoom-out" title="Zoom Out">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                  </svg>
+                </button>
+                <button class="fcf-icon-btn" id="fcf-btn-reset-zoom" title="Reset Viewport">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Metrics & Layer Toggles Sidebar -->
+            <div class="fcf-studio-sidebar">
+              <!-- Live Metrics Panel -->
+              <div>
+                <h4 class="fcf-title-sm" style="margin-bottom: 12px; font-size: 1.05rem;">Live Detection Metrics</h4>
+                
+                <div class="fcf-metric-card" style="margin-bottom: 12px;">
+                  <div class="fcf-metric-label">Landmarks Detected</div>
+                  <div class="fcf-metric-val" id="fcf-val-landmarks-count">—</div>
+                  <div class="fcf-metric-sub">MediaPipe 478-vertex mesh · APAC-Face 98 points</div>
+                </div>
+
+                <div class="fcf-metric-card" style="margin-bottom: 12px;">
+                  <div class="fcf-metric-label">Detection Status</div>
+                  <div class="fcf-metric-val" id="fcf-val-face-status" style="font-size: 1.25rem; color: var(--faceify-emerald);">
+                    —
+                  </div>
+                  <div class="fcf-metric-sub">Confidence Threshold &gt; 0.50</div>
+                </div>
+
+                <div class="fcf-metric-card" style="margin-bottom: 12px;">
+                  <div class="fcf-metric-label">Processing Latency</div>
+                  <div class="fcf-metric-val" id="fcf-val-processing-time">—</div>
+                  <div class="fcf-metric-sub">On-device (WebGL / WebAssembly)</div>
+                </div>
+
+                <div class="fcf-metric-card" style="margin-bottom: 12px;">
+                  <div class="fcf-metric-label">Detection Quality</div>
+                  <div class="fcf-metric-val" id="fcf-val-stability" style="font-size: 1.2rem; color: var(--faceify-cyan);">
+                    —
+                  </div>
+                  <div class="fcf-metric-sub" id="fcf-val-model-name">APAC-Face (Trained)</div>
+                </div>
+              </div>
+
+              <!-- Layer Visibility Controls -->
+              <div class="fcf-metric-card">
+                <div class="fcf-metric-label" style="margin-bottom: 12px;">Visualization Layers</div>
+                <div class="fcf-layers-group">
+                  <div class="fcf-layer-check">
+                    <label for="fcf-chk-landmarks">
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-cyan);"></span>
+                      Show Landmark Points
+                    </label>
+                    <input type="checkbox" id="fcf-chk-landmarks" checked>
+                  </div>
+
+                  <div class="fcf-layer-check">
+                    <label for="fcf-chk-mesh">
+                      <span class="fcf-dot-indicator" style="background: rgba(0, 229, 255, 0.4);"></span>
+                      Show Mesh Connections
+                    </label>
+                    <input type="checkbox" id="fcf-chk-mesh" checked>
+                  </div>
+
+                  <div class="fcf-layer-check">
+                    <label for="fcf-chk-pred">
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-cyan);"></span>
+                      Show Model Predictions
+                    </label>
+                    <input type="checkbox" id="fcf-chk-pred" checked>
+                  </div>
+
+                  <div class="fcf-layer-check">
+                    <label for="fcf-chk-gt">
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-emerald);"></span>
+                      Show Ground Truth (68 pts)
+                    </label>
+                    <input type="checkbox" id="fcf-chk-gt" checked>
+                  </div>
+
+                  <div class="fcf-layer-check">
+                    <label for="fcf-chk-vectors">
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-crimson);"></span>
+                      Show Error Vectors (Δ)
+                    </label>
+                    <input type="checkbox" id="fcf-chk-vectors" checked>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         5. GROUND TRUTH COMPARISON SECTION
+         ============================================================== -->
+    <section class="fcf-gt-section" id="ground-truth">
+      <div class="fcf-container">
+        <div class="fcf-section-header">
+          <div class="fcf-badge fcf-badge-emerald">Rigorous Mathematical Evaluation</div>
+          <h2 class="fcf-title-md">Reference Dataset Comparison</h2>
+          <p class="fcf-subtitle">
+            When reference landmark annotations exist, predicted landmarks are evaluated against ground truth coordinates using formal geometric error formulas.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span id="fcf-gt-status-notice" class="fcf-badge fcf-badge-amber">
+            Waiting for a face with ground-truth annotations ...
+          </span>
+        </div>
+
+        <div class="fcf-gt-model-line">Selected model: <strong id="fcf-gt-model-label">APAC-Face (trained)</strong></div>
+
+        <div class="fcf-gt-grid">
+          <div class="fcf-gt-card">
+            <div class="fcf-metric-label">Mean Euclidean Error</div>
+            <div class="fcf-metric-val" id="fcf-gt-mean-error">—</div>
+            <div class="fcf-metric-sub">Mean pixel distance (L2 norm)</div>
+          </div>
+
+          <div class="fcf-gt-card fcf-gt-card-emerald">
+            <div class="fcf-metric-label">Normalized Mean Error (NME)</div>
+            <div class="fcf-metric-val" id="fcf-gt-nme" style="color: var(--faceify-cyan);">—</div>
+            <div class="fcf-metric-sub">Normalized by Inter-Ocular Distance</div>
+          </div>
+
+          <div class="fcf-gt-card">
+            <div class="fcf-metric-label">Maximum Landmark Error</div>
+            <div class="fcf-metric-val" id="fcf-gt-max-error">—</div>
+            <div class="fcf-metric-sub">Worst-case single point deviation</div>
+          </div>
+
+          <div class="fcf-gt-card">
+            <div class="fcf-metric-label">Failure Rate (&gt;8% NME)</div>
+            <div class="fcf-metric-val" id="fcf-gt-failure-rate">—</div>
+            <div class="fcf-metric-sub">Points failing clinical tolerance</div>
+          </div>
+        </div>
+
+        <!-- Side-by-side: both models on the same face and the same 68 ground-truth points -->
+        <div class="fcf-coords-box fcf-gt-compare">
+          <div class="fcf-coords-header">
+            <span style="font-weight: 700; color: #FFF;">Google MediaPipe vs APAC-Face</span>
+            <span class="fcf-badge" style="margin:0; padding:3px 10px;">lower is better · winner highlighted</span>
+          </div>
+          <div class="fcf-table-scroll" style="max-height: none;">
+            <table class="fcf-table">
+              <thead><tr><th>Metric</th><th>Google MediaPipe</th><th>APAC-Face (trained)</th></tr></thead>
+              <tbody id="fcf-gt-compare-tbody">
+                <tr><td colspan="3" style="text-align:center;">Loading ...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="fcf-gt-compare-summary" class="fcf-gt-compare-summary"></p>
+        </div>
+
+        <div class="fcf-gt-formula-box">
+          <div>
+            <strong>Standard Normalization Formula:</strong>
+            <span style="font-family: var(--faceify-font-mono); margin-left: 8px;">
+              NME = (1/N) &times; &sum; (||p_i - g_i||_2 / d_ocular) &times; 100%
+            </span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--faceify-text-muted);">
+            Points Compared: <span id="fcf-gt-points-compared">0</span> &bull; <span id="fcf-gt-formula-details">Computed only from real annotated coordinates.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         5b. MEASURED BENCHMARK RESULTS (WFLW test set, real ground truth)
+         ============================================================== -->
+    <section class="fcf-gt-section" id="benchmark-results">
+      <div class="fcf-container">
+        <div class="fcf-section-header">
+          <div class="fcf-badge fcf-badge-emerald">Measured, Not Simulated</div>
+          <h2 class="fcf-title-md">APAC-Face vs Google MediaPipe</h2>
+          <p class="fcf-subtitle">
+            Both models on the same WFLW test faces with manual annotations, compared on the same 68 points.
+            Generated by <code>python -m src.mediapipe_baseline</code>.
+          </p>
+        </div>
+
+        <div class="fcf-gt-grid" id="fcf-bench-kpis"></div>
+
+        <div class="fcf-coords-box" style="margin-top: 24px;">
+          <div class="fcf-coords-header">
+            <span style="font-weight: 700; color: #FFF;">Normalized Mean Error, 68 points · lower is better</span>
+          </div>
+          <div class="fcf-bar-chart" id="fcf-bench-chart" role="img" aria-label="NME of MediaPipe, offset-corrected MediaPipe and APAC-Face"></div>
+        </div>
+
+        <div class="fcf-bench-tables">
+          <div class="fcf-coords-box">
+            <div class="fcf-coords-header"><span style="font-weight: 700; color: #FFF;">By WFLW challenge condition (NME)</span></div>
+            <div class="fcf-table-scroll" style="max-height: none;">
+              <table class="fcf-table">
+                <thead><tr><th>Condition</th><th>Faces</th><th>MediaPipe</th><th>MP corrected</th><th>APAC-Face</th></tr></thead>
+                <tbody id="fcf-bench-subsets-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="fcf-coords-box">
+            <div class="fcf-coords-header"><span style="font-weight: 700; color: #FFF;">By facial region (normalized error)</span></div>
+            <div class="fcf-table-scroll" style="max-height: none;">
+              <table class="fcf-table">
+                <thead><tr><th>Region</th><th>MediaPipe</th><th>MP corrected</th><th>APAC-Face</th></tr></thead>
+                <tbody id="fcf-bench-regions-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="fcf-coords-box" style="margin-top: 24px;">
+          <div class="fcf-coords-header">
+            <span style="font-weight: 700; color: #FFF;">APAC demographic groups · label-free consistency (lower is better)</span>
+            <span class="fcf-badge fcf-badge-amber" style="margin:0; padding:3px 10px;">not accuracy: no ground truth</span>
+          </div>
+          <div class="fcf-table-scroll" style="max-height: none;">
+            <table class="fcf-table">
+              <thead><tr><th>Group</th><th>Images</th><th>Flip inconsistency · baseline</th><th>· APAC-Face</th><th>Crop instability · baseline</th><th>· APAC-Face</th></tr></thead>
+              <tbody id="fcf-bench-apac-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="fcf-gt-formula-box" id="fcf-bench-note" style="display: block;"></div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         6. DATASET BENCHMARK GALLERY
+         ============================================================== -->
+    <section class="fcf-gallery-section" id="benchmark-gallery">
+      <div class="fcf-container">
+        <div class="fcf-section-header">
+          <div class="fcf-badge">Reference Sample Evaluation</div>
+          <h2 class="fcf-title-md">APAC Dataset Benchmark</h2>
+          <p class="fcf-subtitle">
+            WFLW faces carry manual annotations, so both models' real errors are measured. APAC photos have no landmark annotations: they show detections only, never an invented error.
+          </p>
+        </div>
+
+        <!-- Demographic Filter & Search Bar for 12,000 Dataset Samples -->
+        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px;">
+          <!-- Filter Tabs -->
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;" id="fcf-gallery-filter-tabs">
+            <button class="fcf-tab-btn active" data-filter="all">All Faces</button>
+            <button class="fcf-tab-btn" data-filter="gt">WFLW · Ground Truth</button>
+            <button class="fcf-tab-btn" data-filter="apac">APAC Inclusive</button>
+            <button class="fcf-tab-btn" data-filter="East Asia">East Asia</button>
+            <button class="fcf-tab-btn" data-filter="South Asia">South Asia / Indian</button>
+            <button class="fcf-tab-btn" data-filter="Southeast Asia">Southeast Asia</button>
+            <button class="fcf-tab-btn" data-filter="other">Other Demographics</button>
+          </div>
+          <div id="fcf-gallery-load-notes" style="text-align:center; font-size: 0.85rem; color: var(--faceify-amber);"></div>
+
+          <!-- Search & Count Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: rgba(0, 20, 50, 0.6); padding: 12px 20px; border-radius: var(--faceify-radius-md); border: 1px solid var(--faceify-border);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="fcf-gallery-status-count" style="font-weight: 700; color: var(--faceify-cyan); font-size: 0.9rem;">
+                Loading samples ...
+              </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <input type="text" id="fcf-gallery-search" class="fcf-coords-search" placeholder="Search by ID, region or condition (e.g. pose, Indian)..." style="width: 280px;">
+              <div style="display: flex; gap: 6px;">
+                <button class="fcf-btn fcf-btn-outline fcf-btn-sm" id="fcf-gallery-prev-btn">&larr; Prev</button>
+                <span id="fcf-gallery-page-indicator" style="align-self: center; font-size: 0.85rem; color: var(--faceify-text-secondary); padding: 0 8px;">1 / 1000</span>
+                <button class="fcf-btn fcf-btn-outline fcf-btn-sm" id="fcf-gallery-next-btn">Next &rarr;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Benchmark Cards Grid -->
+        <div class="fcf-gallery-grid" id="fcf-gallery-container">
+          <!-- Dynamically injected by JS -->
+        </div>
+
+        <!-- Bottom Pagination Bar -->
+        <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 28px;">
+          <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="fcf-gallery-prev-btn-bottom">&larr; Previous Page</button>
+          <span id="fcf-gallery-page-indicator-bottom" style="font-size: 0.9rem; color: var(--faceify-text-secondary);">Page 1 of 1,000</span>
+          <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="fcf-gallery-next-btn-bottom">Next Page &rarr;</button>
+        </div>
+
+        <!-- Custom Dataset / Annotation Loader -->
+        <div class="fcf-dataset-upload-box">
+          <h4 style="margin: 0; color: #FFF; font-size: 1.1rem;">Load Custom Annotation File</h4>
+          <p style="font-size: 0.85rem; color: var(--faceify-text-muted); margin: 0; max-width: 600px;">
+            Have hand-annotated landmarks for your own photo? Upload them to measure both models' real error on it. Supports 68-point TXT (.pts), CSV (image_id, point_id, x, y) or JSON, in pixel coordinates of the loaded image.
+          </p>
+          <button class="fcf-btn fcf-btn-outline fcf-btn-sm" type="button" onclick="document.getElementById('fcf-annotation-file-input').click();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            Upload Annotation (.txt, .csv, .json)
+          </button>
+          <input type="file" id="fcf-annotation-file-input" accept=".txt,.pts,.csv,.json" style="display: none;">
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         7. COORDINATES TABLE SECTION
+         ============================================================== -->
+    <section class="fcf-coords-section" id="coordinates">
+      <div class="fcf-container">
+        <div class="fcf-section-header">
+          <div class="fcf-badge">Spatial Feature Coordinates</div>
+          <h2 class="fcf-title-md">Landmark Coordinates Inspector</h2>
+          <p class="fcf-subtitle">
+            Detailed 2D and normalized landmark localization coordinates for geometric facial analysis.
+          </p>
+        </div>
+
+        <div class="fcf-coords-box">
+          <div class="fcf-coords-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-weight: 700; color: #FFF;">Detected Points:</span>
+              <span id="fcf-coords-count" class="fcf-badge" style="margin:0; padding:3px 10px;">468 points</span>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <input type="text" id="fcf-coords-search" class="fcf-coords-search" placeholder="Filter by ID or Region (e.g. eye, lip, 33)...">
+              <button class="fcf-btn fcf-btn-outline fcf-btn-sm" id="fcf-btn-export-csv">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="fcf-table-scroll">
+            <table class="fcf-table">
+              <thead>
+                <tr>
+                  <th>Point ID</th>
+                  <th>X (Pixel)</th>
+                  <th>Y (Pixel)</th>
+                  <th>Norm X [0-1]</th>
+                  <th>Norm Y [0-1]</th>
+                  <th>Anatomical Region</th>
+                </tr>
+              </thead>
+              <tbody id="fcf-coords-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         8. WHY THIS MATTERS & HOW IT WORKS
+         ============================================================== -->
+    <section class="fcf-info-section" id="why-it-matters">
+      <div class="fcf-container">
+        <div class="fcf-section-header">
+          <div class="fcf-badge">Clinical Rationale</div>
+          <h2 class="fcf-title-md">Why Diverse Facial Landmark Detection Matters</h2>
+          <p class="fcf-subtitle">
+            Facial landmark models are used to understand the geometric structure of a face. Differences in facial morphology across populations can affect landmark localization. Faceify's APAC-focused research evaluates whether models maintain consistent localization across diverse facial structures.
+          </p>
+        </div>
+
+        <div class="fcf-cards-grid-4">
+          <div class="fcf-feature-card">
+            <div class="fcf-feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+              </svg>
+            </div>
+            <h4 class="fcf-title-sm">More Inclusive AI</h4>
+            <p style="font-size: 0.88rem; color: var(--faceify-text-secondary); margin: 0;">
+              Overcoming historical dataset bias by actively benchmarking models against diverse facial shapes, nasal bridges, and contour profiles.
+            </p>
+          </div>
+
+          <div class="fcf-feature-card">
+            <div class="fcf-feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+                <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+              </svg>
+            </div>
+            <h4 class="fcf-title-sm">Better Landmark Localization</h4>
+            <p style="font-size: 0.88rem; color: var(--faceify-text-secondary); margin: 0;">
+              Sub-pixel precision on challenging anatomical regions such as lower eyelid contours, philtrum width, and jawline curvature.
+            </p>
+          </div>
+
+          <div class="fcf-feature-card">
+            <div class="fcf-feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+            <h4 class="fcf-title-sm">More Consistent Analysis</h4>
+            <p style="font-size: 0.88rem; color: var(--faceify-text-secondary); margin: 0;">
+              Eliminates landmark jitter and localization drift between varying lighting, head orientations, and skin tones.
+            </p>
+          </div>
+
+          <div class="fcf-feature-card">
+            <div class="fcf-feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <h4 class="fcf-title-sm">Pre-Consultation Visualization</h4>
+            <p style="font-size: 0.88rem; color: var(--faceify-text-secondary); margin: 0;">
+              Provides objective spatial references so prospective patients and clinicians can discuss aesthetic options transparently.
+            </p>
+          </div>
+        </div>
+
+        <!-- 4-Step Visual Flow -->
+        <div style="margin-top: 64px;">
+          <div class="fcf-section-header" style="margin-bottom: 32px;">
+            <h3 class="fcf-title-sm" style="font-size: 1.5rem;">How It Works</h3>
+            <p class="fcf-subtitle">Streamlined 4-step pipeline from client capture to geometric benchmark.</p>
+          </div>
+
+          <div class="fcf-workflow-grid">
+            <div class="fcf-step-card">
+              <div class="fcf-step-num">01</div>
+              <h4 class="fcf-title-sm">Upload / Camera</h4>
+              <p style="font-size: 0.85rem; color: var(--faceify-text-muted); margin: 0;">
+                High-definition webcam stream or local photo input processed entirely in memory.
+              </p>
+            </div>
+
+            <div class="fcf-step-card">
+              <div class="fcf-step-num">02</div>
+              <h4 class="fcf-title-sm">Face Detection</h4>
+              <p style="font-size: 0.85rem; color: var(--faceify-text-muted); margin: 0;">
+                Ultra-fast single-shot detector identifies face region and bounds the region of interest.
+              </p>
+            </div>
+
+            <div class="fcf-step-card">
+              <div class="fcf-step-num">03</div>
+              <h4 class="fcf-title-sm">Landmark Localization</h4>
+              <p style="font-size: 0.85rem; color: var(--faceify-text-muted); margin: 0;">
+                MediaPipe regresses a 478-point mesh; the trained APAC-Face network regresses 98 WFLW landmarks.
+              </p>
+            </div>
+
+            <div class="fcf-step-card">
+              <div class="fcf-step-num">04</div>
+              <h4 class="fcf-title-sm">Dataset Comparison</h4>
+              <p style="font-size: 0.85rem; color: var(--faceify-text-muted); margin: 0;">
+                Euclidean error and NME computed against real manual annotations whenever they exist.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         9. APAC MODEL & RESEARCH STATUS
+         ============================================================== -->
+    <section class="fcf-apac-section" id="apac-model">
+      <div class="fcf-container">
+        <div class="fcf-section-header">
+          <div class="fcf-badge">Research Initiative</div>
+          <h2 class="fcf-title-md">Building a More Inclusive Landmark Model</h2>
+          <p class="fcf-subtitle">
+            Exploring morphological variations across East Asia, South Asia, and Southeast Asia to engineer robust landmark localization.
+          </p>
+        </div>
+
+        <div class="fcf-regions-grid">
+          <div class="fcf-region-card">
+            <h4 class="fcf-title-sm" style="color: var(--faceify-cyan);">East Asia</h4>
+            <p style="font-size: 0.88rem; color: var(--faceify-text-secondary); margin: 0 0 12px 0;">
+              Evaluates landmark fidelity on varied epicanthic fold geometry, flatter nasal dorsum profiles, and broader zygomatic contours.
+            </p>
+            <span class="fcf-badge" style="margin: 0; font-size: 0.75rem;">Morphology Benchmarked</span>
+          </div>
+
+          <div class="fcf-region-card">
+            <h4 class="fcf-title-sm" style="color: var(--faceify-cyan);">South Asia</h4>
+            <p style="font-size: 0.88rem; color: var(--faceify-text-secondary); margin: 0 0 12px 0;">
+              Benchmarking higher nasal root prominence, deeper orbital vaults, and diverse melanin gradations under natural lighting conditions.
+            </p>
+            <span class="fcf-badge" style="margin: 0; font-size: 0.75rem;">Morphology Benchmarked</span>
+          </div>
+
+          <div class="fcf-region-card">
+            <h4 class="fcf-title-sm" style="color: var(--faceify-cyan);">Southeast Asia</h4>
+            <p style="font-size: 0.88rem; color: var(--faceify-text-secondary); margin: 0 0 12px 0;">
+              Focuses on distinctive alar base widths, varied facial roundness, and cultural ornamentation or makeup adaptation.
+            </p>
+            <span class="fcf-badge" style="margin: 0; font-size: 0.75rem;">Morphology Benchmarked</span>
+          </div>
+        </div>
+
+        <!-- Research Status Tracker -->
+        <div class="fcf-status-tracker">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <h4 class="fcf-title-sm" style="margin: 0;">Academic &amp; Industrial Milestone Tracker</h4>
+            <span class="fcf-badge fcf-badge-emerald" style="margin: 0;">Model Trained &amp; Benchmarked</span>
+          </div>
+
+          <div class="fcf-stages-flow">
+            <div class="fcf-stage-item done">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #FFF; font-size: 0.9rem;">Dataset Collection</strong>
+                <span style="color: var(--faceify-emerald);">&check;</span>
+              </div>
+              <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">APAC diverse facial images curated &amp; verified</span>
+            </div>
+
+            <div class="fcf-stage-item done">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #FFF; font-size: 0.9rem;">Baseline Evaluation</strong>
+                <span style="color: var(--faceify-emerald);">&check;</span>
+              </div>
+              <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">MediaPipe 468-point mesh benchmarked</span>
+            </div>
+
+            <div class="fcf-stage-item done">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #FFF; font-size: 0.9rem;">APAC Model Training</strong>
+                <span style="color: var(--faceify-emerald);">&check;</span>
+              </div>
+              <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">MobileNetV2 fine-tuned on WFLW with augmentation + balanced sampling</span>
+            </div>
+
+            <div class="fcf-stage-item done">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #FFF; font-size: 0.9rem;">Model Comparison</strong>
+                <span style="color: var(--faceify-emerald);">&check;</span>
+              </div>
+              <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">Live NME vs MediaPipe on real ground truth</span>
+            </div>
+
+            <div class="fcf-stage-item in-progress">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: var(--faceify-cyan); font-size: 0.9rem;">Annotated APAC Test Set</strong>
+                <span style="color: var(--faceify-cyan); font-size: 0.75rem;">NEXT</span>
+              </div>
+              <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">Hand-labelled APAC faces for per-group accuracy</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         10. CONSULTATION CTA
+         ============================================================== -->
+    <section class="fcf-cta-section" id="consultation-cta">
+      <div class="fcf-container">
+        <div class="fcf-cta-box">
+          <div class="fcf-badge">Clinical Pathway</div>
+          <h2 class="fcf-title-md">Understand Your Facial Analysis Before Your Consultation</h2>
+          <p class="fcf-subtitle" style="margin: 0 auto 32px auto;">
+            Explore an AI-assisted visualization of facial landmarks before speaking with a qualified professional. Gain clear, geometric insights into your natural facial balance.
+          </p>
+          <a href="#contact" class="fcf-btn fcf-btn-primary">
+            Continue to Consultation
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================================
+         11. FOOTER
+         ============================================================== -->
+    <footer class="fcf-footer" id="contact">
+      <div class="fcf-container">
+        <div class="fcf-footer-grid">
+          <div>
+            <div class="fcf-logo" style="margin-bottom: 16px;">
+              <div class="fcf-logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#001738" stroke-width="2.5">
+                  <path d="M9 3H5a2 2 0 0 0-2 2v4m0 6v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4m0-6V5a2 2 0 0 0-2-2h-4"></path>
+                </svg>
+              </div>
+              <span class="fcf-logo-text">Faceify</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--faceify-text-muted); max-width: 320px; margin: 0 0 16px 0;">
+              AI-powered facial analysis and visualization technology helping users understand facial symmetry and structure before medical consultation.
+            </p>
+            <div style="font-size: 0.8rem; color: var(--faceify-text-dim);">
+              APAC Diversity Initiative &bull; Industrial Student Research
+            </div>
+          </div>
+
+          <div>
+            <h5 style="color: #FFF; font-size: 0.95rem; margin: 0 0 16px 0;">Platform</h5>
+            <ul class="fcf-footer-links">
+              <li><a href="#fcf-landmark-studio">Landmark Studio</a></li>
+              <li><a href="#ground-truth">Ground Truth Metrics</a></li>
+              <li><a href="#benchmark-gallery">APAC Benchmark</a></li>
+              <li><a href="#coordinates">Coordinates Export</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h5 style="color: #FFF; font-size: 0.95rem; margin: 0 0 16px 0;">Research</h5>
+            <ul class="fcf-footer-links">
+              <li><a href="#apac-model">APAC Inclusivity</a></li>
+              <li><a href="#why-it-matters">Morphology Study</a></li>
+              <li><a href="#apac-model">Milestones</a></li>
+              <li><a href="https://github.com" target="_blank" rel="noopener">Code Repository</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h5 style="color: #FFF; font-size: 0.95rem; margin: 0 0 16px 0;">Consultation</h5>
+            <ul class="fcf-footer-links">
+              <li><a href="#consultation-cta">Book Session</a></li>
+              <li><a href="#contact">Clinic Partners</a></li>
+              <li><a href="#home">Privacy Policy</a></li>
+              <li><a href="#home">Terms of Service</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="fcf-disclaimer-bar">
+          <p style="margin: 0 0 6px 0; color: #FCD34D;">
+            <strong>Medical Disclaimer:</strong> AI visualization and facial landmark detection only. Not a medical diagnosis or treatment recommendation.
+          </p>
+          <p style="margin: 0;">
+            &copy; 2026 Faceify Inc. All rights reserved. 100% Client-side on-device processing.
+            Baseline: Google MediaPipe Face Landmarker (Apache-2.0).
+          </p>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Application Scripts (Zero Build Step, Modular ES6 Classes) -->
+  <script src="./js/detectors/base-detector.js"></script>
+  <script src="./js/detectors/mediapipe-detector.js"></script>
+  <script src="./js/detectors/apac-detector.js"></script>
+  <script src="./js/dataset-manager.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

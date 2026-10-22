@@ -21,12 +21,21 @@ def _valid_rows(pred: np.ndarray) -> np.ndarray:
     return np.isfinite(pred).all(axis=(-2, -1))
 
 
-def per_sample_nme(pred: np.ndarray, gt: np.ndarray) -> np.ndarray:
+def per_sample_nme(pred: np.ndarray, gt: np.ndarray, outer_eyes: tuple[int, int] | None = None,
+                   points: tuple[int, ...] | None = None) -> np.ndarray:
+    """NME per face. `outer_eyes` defaults to WFLW (60, 72); use (36, 45) for 68-point arrays.
+    `points` restricts the average to a subset while keeping the full-face normaliser."""
     pred, gt = np.asarray(pred, np.float64), np.asarray(gt, np.float64)
     if pred.shape != gt.shape:
         raise ValueError(f"shape mismatch: pred {pred.shape} vs gt {gt.shape}")
-    norm = interocular_distance(gt)
-    err = np.linalg.norm(pred - gt, axis=-1).mean(axis=-1)
+    if outer_eyes is None:
+        norm = interocular_distance(gt)
+    else:
+        norm = np.linalg.norm(gt[..., outer_eyes[0], :] - gt[..., outer_eyes[1], :], axis=-1)
+    dist = np.linalg.norm(pred - gt, axis=-1)
+    if points is not None:
+        dist = dist[..., list(points)]
+    err = dist.mean(axis=-1)
     with np.errstate(invalid="ignore", divide="ignore"):
         nme = err / norm
     nme[~_valid_rows(pred) | ~(norm > 0)] = np.nan

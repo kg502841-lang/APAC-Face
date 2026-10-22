@@ -70,6 +70,40 @@ REGION_COLORS: dict[str, tuple[int, int, int]] = {  # RGB
 }
 
 
+# --------------------------------------------------------------------------- 68-point common layout
+# The iBUG / 300W 68-point layout is the common ground for comparing models with different topologies
+# (0-16 jaw, 17-26 brows, 27-35 nose, 36-47 eyes, 48-67 mouth; 36 and 45 are the outer eye corners).
+
+# Standard WFLW-98 -> 68 subset (every other contour point; 3 of 4 lid points per eye).
+WFLW_TO_68: tuple[int, ...] = (
+    0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32,   # jaw
+    33, 34, 35, 36, 37, 42, 43, 44, 45, 46,                          # brows (upper edges)
+    51, 52, 53, 54, 55, 56, 57, 58, 59,                              # nose
+    60, 61, 63, 64, 65, 67, 68, 69, 71, 72, 73, 75,                  # eyes
+    76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,                  # outer lip
+    88, 89, 90, 91, 92, 93, 94, 95,                                  # inner lip
+)
+
+# MediaPipe face-mesh vertex -> 68-point layout (same map as the Faceify web app's DatasetManager).
+MEDIAPIPE_TO_68: tuple[int, ...] = (
+    162, 234, 93, 58, 172, 136, 149, 148, 152, 377, 378, 365, 397, 288, 323, 454, 389,
+    70, 63, 105, 66, 107, 336, 296, 334, 293, 300,
+    168, 197, 5, 4, 75, 97, 2, 326, 305,
+    33, 160, 158, 133, 153, 144, 362, 385, 387, 263, 373, 380,
+    61, 39, 37, 0, 267, 269, 291, 405, 314, 17, 84, 181,
+    78, 81, 13, 311, 308, 402, 14, 178,
+)
+EYES_68 = (36, 45)
+INNER_68 = tuple(range(17, 68))  # everything except the jaw line, where annotation conventions differ most
+REGIONS_68 = (("Jawline", 0, 17), ("Eyebrows", 17, 27), ("Nose", 27, 36), ("Eyes", 36, 48), ("Mouth", 48, 68))
+
+
+def to_68(landmarks: np.ndarray, source: str) -> np.ndarray:
+    """Reduce (..., 98, 2) WFLW or (..., >=468, 2) MediaPipe landmarks to the 68-point layout."""
+    index = {"wflw": WFLW_TO_68, "mediapipe": MEDIAPIPE_TO_68}[source]
+    return np.asarray(landmarks)[..., list(index), :]
+
+
 def flip_landmarks(landmarks: np.ndarray, width: float) -> np.ndarray:
     """Mirror landmarks (..., 98, 2) horizontally inside an image of the given width."""
     out = np.array(landmarks, dtype=np.float32, copy=True)

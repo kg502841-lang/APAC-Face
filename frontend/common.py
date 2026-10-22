@@ -108,6 +108,12 @@ def fmt_p(p: float) -> str:
     return f"< {1 / n:.4f}" if p == 0 else f"{p:.4f}"
 
 
+def p_text(p: float) -> str:
+    """'p < 0.0005' or 'p = 0.1890' for use in sentences."""
+    v = fmt_p(p)
+    return f"p {v}" if v.startswith("<") else f"p = {v}"
+
+
 def model_color(name: str, order: list[str] | None = None) -> str:
     if name in MODEL_COLORS:
         return MODEL_COLORS[name]

@@ -13,6 +13,7 @@ a robustness analysis, a REST inference API and an interactive dashboard.
 | Question | Data | Evidence type |
 |---|---|---|
 | How accurate is the model, and how much better than the baseline? | WFLW test set (2,500 faces, ground truth) | **Accuracy** (NME, failure rate, AUC) with a paired bootstrap test |
+| Is it more accurate than Google MediaPipe? | Same WFLW test faces, 68 common points | **Accuracy** vs MediaPipe Face Landmarker, also after correcting MediaPipe's labelling-style offset |
 | Does it hold up under hard imaging conditions? | WFLW pose / expression / illumination / make-up / occlusion / blur subsets | **Accuracy** per condition. These are *imaging conditions, not demographic groups* |
 | Does it behave consistently across East, Southeast and South Asian faces? | FairFace-style APAC images, group labels from the dataset's file names | **Label-free consistency** (flip consistency, crop stability). *Not accuracy*: these images have no landmark ground truth |
 | True per-population accuracy | An annotated APAC test set | Supported by `src/apac_eval.py --annotations`. Needs annotated data, which this repository does not have yet |
@@ -45,6 +46,49 @@ The committed checkpoints were trained with PyTorch 2.6.0 (CUDA 12.4) and evalua
 - Each model was trained once (seed 42). The bootstrap covers test-set sampling, not seed-to-seed variance.
 
 ![NME comparison](results/nme_comparison.png)
+
+### Against Google MediaPipe (WFLW test, real ground truth)
+
+`python -m src.mediapipe_baseline` runs Google's MediaPipe Face Landmarker (478-point mesh, model
+`face_landmarker.task`, mediapipe 1.1.1) on every WFLW test face. MediaPipe and APAC-Face (98 points) are then
+reduced to the common **68-point iBUG layout** and scored against the manual annotations reduced the same way.
+MediaPipe detected 2,267 of 2,500 faces (90.7%); every number below uses those 2,267 faces for every method.
+
+| Method | NME, 68 pts | Inner face (no jaw) | Mean Euclidean Error | Failure rate (NME > 10%) | Points > 8% |
+|---|---|---|---|---|---|
+| Google MediaPipe | 8.44% | 6.44% | 6.14 px | 21.2% | 32.3% |
+| MediaPipe, offset-corrected | 7.28% | **5.46%** | 5.16 px | 17.7% | 24.9% |
+| **APAC-Face, same face location as MediaPipe** | 6.60% | 5.92% | 4.88 px | 9.3% | 22.6% |
+| APAC-Face, standard WFLW crop | **5.69%** | 5.22% | **4.32 px** | **6.5%** | **20.8%** |
+
+- **Same face location** is the fair head-to-head and what the web app runs: our crop is built from MediaPipe's own
+  detection (a 3-number box mapping learned on WFLW training faces, one pass). The standard WFLW protocol instead
+  crops around the annotated face, which no detector-based system gets in practice.
+- **Offset-corrected MediaPipe** gives MediaPipe its best case. Its mesh follows a different landmark convention
+  from manual annotation (most visibly on the jaw). So the median per-point offset to ground truth, in an
+  eye-aligned frame, is learned on 1,914 WFLW *training* faces and added to its test predictions.
+- **Against MediaPipe as shipped**, APAC-Face is better everywhere: NME −21.8% with the same face location
+  (95% CI of the drop 1.74–1.93 points), −32.6% with the standard crop. Inner-face error is also lower (−8.1% and
+  −18.9%, both p < 0.0005).
+- **Against offset-corrected MediaPipe**, APAC-Face is still better on all 68 points (−9.3% with the same face
+  location, CI 0.57–0.77 points). The gain comes from the jaw line (8.64% vs 12.71%). **On the inner face points
+  the corrected MediaPipe is better** with the same face location (5.46% vs 5.92%, significant). With the
+  standard crop the two are statistically tied (−4.4%, p = 0.19).
+- **Caveat:** APAC-Face was trained on WFLW's annotation convention, which favours it on this test set. The gap
+  between "same face location" and "standard crop" (6.60% vs 5.69%) shows that a detector-robust model is the
+  next improvement.
+
+| Region (normalised error) | MediaPipe | MediaPipe corrected | APAC-Face, same location |
+|---|---|---|---|
+| Jawline | 14.43% | 12.71% | **8.64%** |
+| Eyebrows | 8.98% | 6.87% | **6.79%** |
+| Nose | 5.54% | **4.99%** | 5.29% |
+| Eyes | 5.35% | **4.70%** | 5.19% |
+| Mouth | 6.24% | **5.43%** | 6.22% |
+
+![MediaPipe comparison](results/mediapipe_comparison.png)
+
+![MediaPipe by condition](results/mediapipe_subsets.png)
 
 ### Robustness across WFLW challenge conditions (imaging conditions, not demographic groups)
 
@@ -188,10 +232,13 @@ APAC-Face/
 │   ├── apac_eval.py         per-group consistency (and accuracy, given annotations)
 │   ├── inference.py         face detection, crop, predict, refine; CLI
 │   ├── live.py              webcam / video mode with frame-to-frame face tracking
+│   ├── mediapipe_baseline.py Google MediaPipe benchmark on WFLW (68 common points)
+│   ├── export_web.py        ONNX export + data for the web app
 │   ├── plotting.py          report figures
 │   └── utils.py             config, seeding, device, JSON helpers
 ├── backend/main.py          FastAPI service
 ├── frontend/                Streamlit dashboard (app.py + views/)
+├── web/                     Faceify web app: index.html, js/, styles/, models/ (ONNX + MediaPipe), data/
 ├── checkpoints/             trained inference weights + detector calibration
 ├── results/                 metrics, CSV tables, figures, training logs
 ├── scripts/                 train_all.ps1, run_app.ps1
@@ -209,6 +256,13 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate      Linux/macOS: source .venv/bin/activate
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 pip install -r requirements.txt
+```
+
+For the MediaPipe benchmark and the web export:
+
+```bash
+pip install mediapipe --no-deps     # its opencv-contrib-python 5.x dependency would replace opencv-python<5
+pip install absl-py flatbuffers onnx onnxruntime onnxscript
 ```
 
 `requirements-lock.txt` pins the exact versions this project was tested with. Use it instead of
@@ -262,6 +316,7 @@ On this machine each 60-epoch run took about 25 minutes.
 ```bash
 python -m src.inference --calibrate-detector     # fit the face-detector -> crop mapping on WFLW train
 python -m src.evaluate                           # WFLW test: metrics.json, CSVs, figures
+python -m src.mediapipe_baseline                 # Google MediaPipe vs APAC-Face on the same faces
 python -m src.apac_eval --source "path/to/APAC asian images.zip" --per-group 300
 ```
 
@@ -296,6 +351,43 @@ Single-image command line:
 ```bash
 python -m src.inference --image face.jpg --model proposed --out results/predictions/face.png
 ```
+
+### Faceify web app (browser, both models on-device)
+
+`web/` is the Faceify landmark-analysis site (originally `D:\AntiPro`), with the same sections, design and
+features. Two things changed:
+
+- **"Optimized for Diverse Faces" is now the trained APAC-Face network**, running in the browser through ONNX
+  Runtime Web (`web/models/apac_proposed.onnx`). It used to be MediaPipe remapped to 68 points.
+- **The baseline is Google MediaPipe Face Landmarker** (`@mediapipe/tasks-vision`), loading the same
+  `face_landmarker.task` file the Python benchmark scores. It replaces the deprecated FaceMesh script.
+
+```bash
+python -m src.export_web --apac-source "path/to/APAC asian images.zip"   # model, galleries, results
+python -m http.server 8080 --directory web                               # then open http://localhost:8080
+```
+
+The API also serves it at http://127.0.0.1:8000/web/ whenever `uvicorn backend.main:app` is running. The page
+needs internet access for the ONNX Runtime and MediaPipe scripts (jsDelivr CDN). Photos never leave the browser.
+
+- **Mean Euclidean Error, NME, Maximum Landmark Error and Failure Rate (>8% NME)** are computed live in the
+  browser for **both** models on the same 68 points. They appear whenever the face has real ground truth: the
+  WFLW benchmark faces (manual annotations) or an annotation file you upload for your own photo. A
+  side-by-side table marks the winner per metric.
+- **Webcam and unannotated photos** have no ground truth, so the page shows the measured benchmark errors and the
+  live disagreement between the two models instead of an invented error.
+- **Ground truth is real only.** The original app derived every sample's "ground truth" from one 68-point
+  template face (`BASE_TEMPLATE_68`), and generated it for any unannotated image too. Its error numbers measured
+  the distance to a template, not to the real landmarks. That code is gone.
+- **Verified:** for the same image and crop, the browser model and the PyTorch model differ by 0.14 px on average
+  (0.35 px max, face with a 111 px inter-ocular distance). On the 70-face WFLW gallery, most of it the hardest
+  challenge conditions, APAC-Face beat MediaPipe on 54 of the 58 faces MediaPipe detected: NME 8.88% vs 10.74%,
+  mean error 9.20 vs 11.01 px, maximum error 21.5 vs 34.4 px.
+- **Live mode** tracks the face from frame to frame, with MediaPipe re-checking every 15 frames. Our model runs in
+  about 60 ms per frame on the CPU (WebAssembly, one thread), about 16 FPS. When MediaPipe finds no face on a
+  photo, APAC-Face runs on a centred crop with two refinement passes and says so.
+- The WFLW and APAC gallery images and annotations are generated locally and git-ignored (dataset licences). The
+  model, metadata and measured results are committed.
 
 ### Live webcam detection
 
@@ -374,6 +466,11 @@ under augmentation, the metrics, the model and checkpoints, inference, the API, 
   heatmap models (HRNet, STAR, ...).
 - **Single seed.** Each configuration is trained once (seed 42), so differences within the bootstrap CI
   should not be over-read.
+- **MediaPipe comparison across conventions.** MediaPipe's mesh vertices are not WFLW annotation points, so its
+  raw numbers include a labelling-style gap. The offset-corrected row removes most of it. APAC-Face has a home
+  advantage on WFLW. Its lead over corrected MediaPipe comes from the jaw line and eyebrows, not the inner face.
+- **Detector box gap.** With a detector's box instead of the annotated crop, APAC-Face's NME rises from 5.69%
+  to 6.60%. Training on detector-style crops should close part of that gap.
 - **Weak face detector.** The Haar detector is frontal-only. When it misses a face, the image is treated as a
   centred face crop, and the dashboard says so.
 
@@ -392,3 +489,6 @@ under augmentation, the metrics, the model and checkpoints, inference, the API, 
   K. Kärkkäinen, J. Joo. *FairFace: Face Attribute Dataset for Balanced Race, Gender, and Age.* WACV 2021.
   Not redistributed here.
 - MobileNetV2 ImageNet weights from torchvision.
+- Google MediaPipe Face Landmarker (`web/models/face_landmarker.task`) and `@mediapipe/tasks-vision`: Apache-2.0.
+  ONNX Runtime Web: MIT.
+- The Faceify web app design and features come from the author's earlier `AntiPro` project.

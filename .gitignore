@@ -25,6 +25,11 @@ results/*_smoke*
 results/logs/*.out
 results/logs/*.err
 
+# Web app galleries hold dataset images and WFLW annotations: regenerate with python -m src.export_web
+web/benchmark/
+web/data/wflw_benchmark.json
+web/data/apac_gallery.json
+
 # Editors / OS / local tooling
 .claude/
 .vscode/

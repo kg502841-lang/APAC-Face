@@ -49,7 +49,7 @@ if base in models and prop in models:
         verdict = ("significant at the 5% level" if bs["p_value"] < 0.05
                    else "not significant at the 5% level")
         st.caption(f"Paired bootstrap over {bs['n']:,} test faces: mean NME reduction "
-                   f"{bs['mean_diff'] * 100:.3f} points, p {common.fmt_p(bs['p_value'])} - {verdict}. "
+                   f"{bs['mean_diff'] * 100:.3f} points, {common.p_text(bs['p_value'])} - {verdict}. "
                    "Each model was trained once (seed 42), so this covers test-set sampling, not seed variance.")
 
 st.write("")
@@ -66,6 +66,43 @@ with c3:
     st.plotly_chart(common.bar_by_model(names, [models[n]["overall"]["auc"] for n in names],
                                         f"AUC @{thr * 100:.0f}% · higher is better", "{:.3f}", "AUC"),
                     width="stretch")
+
+mpc = common.load_result_json("mediapipe_comparison.json")
+if mpc:
+    st.markdown("#### Against Google MediaPipe (68 common points, real WFLW ground truth)")
+    order = [k for k in ("mediapipe", "mediapipe_calibrated", "baseline", "augmented", "proposed",
+                         "proposed_mp_located") if k in mpc["methods"]]
+    mp_colors = {"mediapipe": "#898781", "mediapipe_calibrated": "#c3c2b7", "proposed_mp_located": "#199e70"}
+    labels = [mpc["methods"][k]["label"] for k in order]
+    vals = [mpc["methods"][k]["detected_faces"]["nme"] * 100 for k in order]
+    fig = go.Figure(go.Bar(
+        x=labels, y=vals, text=[f"{v:.2f}" for v in vals], textposition="outside", cliponaxis=False,
+        marker=dict(color=[mp_colors.get(k, common.model_color(k, names)) for k in order],
+                    line=dict(color="#ffffff", width=2)),
+        hovertemplate="%{x}<br>NME %{y:.2f}%<extra></extra>"))
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(common.style_figure(fig, 360, "NME, 68 points (%) · lower is better"), width="stretch")
+    rows = []
+    for k in order:
+        d = mpc["methods"][k]["detected_faces"]
+        rows.append({"Method": mpc["methods"][k]["label"], "NME 68 (%)": round(d["nme"] * 100, 2),
+                     "Inner-face NME (%)": round(d["nme_inner"] * 100, 2),
+                     "Mean Euclidean Error (px)": round(d["mean_error_px"], 2),
+                     "Face failure rate >10% (%)": round(d["failure_rate"] * 100, 2),
+                     "Point failure rate >8% (%)": round(d["point_failure_rate"] * 100, 1),
+                     "Jawline (%)": round(d["regions"]["Jawline"] * 100, 2)})
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    loc = "proposed_mp_located" if "proposed_mp_located" in mpc["methods"] else cfg["eval"]["proposed"]
+    c1 = mpc["comparison"][f"{loc}_vs_mediapipe"]
+    c2 = mpc["comparison"][f"{loc}_vs_mediapipe_calibrated"]
+    st.caption(
+        f"{mpc['faces_detected']:,} of {mpc['faces_total']:,} WFLW test faces (MediaPipe's detections; every method "
+        f"scored on the same faces). With the same face location as MediaPipe, APAC-Face cuts NME by "
+        f"{c1['nme_reduction_pct']:.1f}% vs MediaPipe and {c2['nme_reduction_pct']:.1f}% vs offset-corrected MediaPipe "
+        f"({common.p_text(c2['bootstrap_nme_diff']['p_value'])}). Inner face only (no jaw line), the corrected "
+        + (f"MediaPipe is {-c2['inner_nme_reduction_pct']:.1f}% better than APAC-Face"
+           if c2['inner_nme_reduction_pct'] < 0 else f"baseline is {c2['inner_nme_reduction_pct']:.1f}% worse")
+        + f" ({common.p_text(c2['bootstrap_inner_nme_diff']['p_value'])}): the overall lead comes from the jaw line.")
 
 st.markdown("#### Cumulative error distribution")
 fig = go.Figure()

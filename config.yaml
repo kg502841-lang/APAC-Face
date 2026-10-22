@@ -8,6 +8,8 @@ paths:
   checkpoints: checkpoints
   results: results
   apac_source: data/APAC      # folder or .zip of images named {id}_{Group}.jpg
+  mediapipe_model: web/models/face_landmarker.task   # Google MediaPipe Face Landmarker (Apache-2.0)
+  web: web                    # Faceify web app (served statically)
 
 data:
   input_size: 224             # network input resolution (square)
@@ -91,6 +93,10 @@ live:                         # webcam mode: python -m src.inference --webcam, d
   redetect_every: 15          # frames between face-detector checks while tracking
   max_missed_detections: 2    # consecutive detector misses before the track is dropped
   smoothing: 0.4              # weight of the previous frame's landmarks (0 = off); higher = steadier, laggier
+
+mediapipe:                    # external baseline: python -m src.mediapipe_baseline
+  train_faces: 2000           # WFLW training faces used to learn MediaPipe's convention offset
+  min_confidence: 0.5
 
 apac:
   per_group: 300              # images sampled per demographic group
