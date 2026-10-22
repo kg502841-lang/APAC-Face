@@ -215,6 +215,8 @@ def run(predictor: LandmarkPredictor, source: int | str, live_cfg: dict[str, Any
                     path = snapshot_dir / f"live_{time.strftime('%Y%m%d_%H%M%S')}.png"
                     cv2.imwrite(str(path), shown[:, :, ::-1])
                     log.info("Snapshot saved to %s", path)
+    except KeyboardInterrupt:  # Ctrl-C in the terminal is a normal way to stop
+        log.info("Stopped with Ctrl-C")
     finally:
         cap.release()
         if writer is not None:
