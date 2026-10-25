@@ -22,6 +22,55 @@ const WFLW_REGIONS = [
   ["Right Eye", 60, 68], ["Left Eye", 68, 76], ["Mouth", 76, 96], ["Pupils", 96, 98]
 ];
 
+/**
+ * One Euro filter (Casiez et al., CHI 2012), identical to OneEuroFilter in src/live.py: the cutoff
+ * rises with speed, so still faces are smoothed strongly (no jitter) and moving faces lightly (little
+ * lag). Speed is measured in face sizes per second, so settings do not depend on face size.
+ */
+class OneEuroFilter {
+  constructor({ min_cutoff = 0.3, beta = 20.0, d_cutoff = 1.0, filter = "one_euro" } = {}) {
+    this.minCutoff = min_cutoff;
+    this.beta = beta;
+    this.dCutoff = d_cutoff;
+    this.enabled = filter === "one_euro";
+    this.reset();
+  }
+
+  reset() {
+    this.x = null;
+    this.dx = null;
+    this.t = null;
+  }
+
+  static alpha(cutoff, dt) {
+    const tau = 1 / (2 * Math.PI * cutoff);
+    return 1 / (1 + tau / dt);
+  }
+
+  apply(pts, t, scale) {
+    if (!this.enabled) return pts;
+    if (!this.x || this.t === null || t <= this.t) {
+      this.x = pts.map(p => ({ x: p.x, y: p.y }));
+      this.dx = pts.map(() => ({ x: 0, y: 0 }));
+      this.t = t;
+      return pts;
+    }
+    const dt = t - this.t;
+    const aD = OneEuroFilter.alpha(this.dCutoff, dt);
+    this.x = pts.map((p, i) => {
+      const prev = this.x[i];
+      const d = this.dx[i];
+      d.x = aD * (p.x - prev.x) / dt + (1 - aD) * d.x;
+      d.y = aD * (p.y - prev.y) / dt + (1 - aD) * d.y;
+      const speed = Math.hypot(d.x, d.y) / Math.max(scale, 1e-6);
+      const a = OneEuroFilter.alpha(this.minCutoff + this.beta * speed, dt);
+      return { x: a * p.x + (1 - a) * prev.x, y: a * p.y + (1 - a) * prev.y };
+    });
+    this.t = t;
+    return this.x;
+  }
+}
+
 class APACDetector extends LandmarkDetector {
   constructor(options = {}) {
     super("APAC-Face (Trained, 98-Point)", options);
@@ -54,6 +103,7 @@ class APACDetector extends LandmarkDetector {
       this.canvas.height = size;
       this.ctx = this.canvas.getContext("2d", { willReadFrequently: true });
       this.connections = this._buildConnections();
+      this.filter = new OneEuroFilter(this.meta.live || {});
       this.name = `APAC-Face (Trained, ${this.meta.num_landmarks}-Point)`;
       this.isReady = this.isConnected = true;
       console.log("[APACDetector] Trained model loaded:", this.meta.model_file);
@@ -81,6 +131,7 @@ class APACDetector extends LandmarkDetector {
   resetTracking() {
     this.track = null;
     this.lastFrameLandmarks = null;
+    if (this.filter) this.filter.reset();
   }
 
   // ------------------------------------------------------------------ geometry
@@ -217,14 +268,13 @@ class APACDetector extends LandmarkDetector {
     }
 
     if (isVideo) {
-      const a = this.meta.live.smoothing || 0;
-      if (state === "tracking" && a > 0) {
-        pts = pts.map((p, i) => ({ x: a * this.track.landmarks[i].x + (1 - a) * p.x,
-                                   y: a * this.track.landmarks[i].y + (1 - a) * p.y }));
-      }
+      // The next crop follows the RAW prediction; only the displayed points are filtered,
+      // so smoothing never feeds back into what the model sees (same as src/live.py).
       const tracking = state === "tracking";
       this.track = { landmarks: pts, frames: tracking ? this.track.frames + 1 : 1,
                      misses: tracking ? this.track.misses : 0 };
+      if (!tracking) this.filter.reset();
+      pts = this.filter.apply(pts, performance.now() / 1000, box.side);
     }
 
     const landmarks = pts.map((p, i) => ({

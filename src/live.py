@@ -32,35 +32,121 @@ log = get_logger("live")
 
 @dataclass
 class LiveResult:
-    landmarks: np.ndarray | None   # (98, 2) in frame pixels, None while searching
+    landmarks: np.ndarray | None   # (98, 2) filtered landmarks in frame pixels, None while searching
     box: Box | None
     state: str                     # "detected" (new track), "tracking" or "searching"
     model_ms: float
     total_ms: float
+    raw: np.ndarray | None = None  # the model's unfiltered prediction for this frame
 
 
-class LiveTracker:
-    def __init__(self, predictor: LandmarkPredictor, redetect_every: int = 15,
-                 max_missed_detections: int = 2, smoothing: float = 0.4):
+class OneEuroFilter:
+    """One Euro filter (Casiez et al., CHI 2012) over an array of landmark coordinates.
+
+    A low-pass filter whose cutoff rises with speed: strong smoothing while the face is still
+    (kills jitter), little smoothing while it moves (little lag). Speed is measured in face sizes
+    per second (`scale` = current face box side), so the settings do not depend on face size.
+        cutoff = min_cutoff + beta * |speed|
+    """
+
+    def __init__(self, min_cutoff: float = 0.3, beta: float = 20.0, d_cutoff: float = 1.0):
+        self.min_cutoff, self.beta, self.d_cutoff = float(min_cutoff), float(beta), float(d_cutoff)
+        self.reset()
+
+    def reset(self) -> None:
+        self.x: np.ndarray | None = None
+        self.dx: np.ndarray | None = None
+        self.t: float | None = None
+
+    @staticmethod
+    def _alpha(cutoff: np.ndarray | float, dt: float) -> np.ndarray | float:
+        tau = 1.0 / (2 * np.pi * cutoff)
+        return 1.0 / (1.0 + tau / dt)
+
+    def __call__(self, x: np.ndarray, t: float, scale: float) -> np.ndarray:
+        x = np.asarray(x, np.float64)
+        if self.x is None or self.t is None or t <= self.t:
+            self.x, self.dx, self.t = x, np.zeros_like(x), t
+            return x.astype(np.float32)
+        dt = t - self.t
+        dx = (x - self.x) / dt
+        a_d = self._alpha(self.d_cutoff, dt)
+        self.dx = a_d * dx + (1 - a_d) * self.dx
+        speed = np.linalg.norm(self.dx, axis=-1, keepdims=True) / max(scale, 1e-6)
+        a = self._alpha(self.min_cutoff + self.beta * speed, dt)
+        self.x = a * x + (1 - a) * self.x
+        self.t = t
+        return self.x.astype(np.float32)
+
+
+class EmaFilter:
+    """Fixed-weight exponential moving average (the earlier live-mode smoothing)."""
+
+    def __init__(self, smoothing: float = 0.4):
         if not 0.0 <= smoothing < 1.0:
             raise ValueError("smoothing must be in [0, 1)")
-        self.predictor = predictor
-        self.redetect_every = max(1, int(redetect_every))
-        self.max_missed = max(0, int(max_missed_detections))
         self.smoothing = float(smoothing)
         self.reset()
 
     def reset(self) -> None:
-        self.landmarks: np.ndarray | None = None
+        self.x: np.ndarray | None = None
+
+    def __call__(self, x: np.ndarray, t: float, scale: float) -> np.ndarray:
+        x = np.asarray(x, np.float32)
+        self.x = x if self.x is None else self.smoothing * self.x + (1 - self.smoothing) * x
+        return self.x
+
+
+class NoFilter:
+    def reset(self) -> None:
+        pass
+
+    def __call__(self, x: np.ndarray, t: float, scale: float) -> np.ndarray:
+        return np.asarray(x, np.float32)
+
+
+def make_filter(live_cfg: dict[str, Any] | None):
+    """`live.filter`: one_euro (default) | ema | none."""
+    c = live_cfg or {}
+    kind = c.get("filter", "one_euro")
+    if kind == "one_euro":
+        return OneEuroFilter(c.get("min_cutoff", 0.3), c.get("beta", 20.0), c.get("d_cutoff", 1.0))
+    if kind == "ema":
+        return EmaFilter(c.get("smoothing", 0.4))
+    if kind == "none":
+        return NoFilter()
+    raise ValueError(f"Unknown live.filter {kind!r} (one_euro | ema | none)")
+
+
+class LiveTracker:
+    """Detect once, then track: each frame is cropped around the previous frame's *raw* prediction
+    (the model's own crop convention); the filter only smooths what is returned, so it never feeds
+    back into what the model sees."""
+
+    def __init__(self, predictor: LandmarkPredictor, redetect_every: int = 15,
+                 max_missed_detections: int = 2, smoothing: float | None = None, landmark_filter=None):
+        self.predictor = predictor
+        self.redetect_every = max(1, int(redetect_every))
+        self.max_missed = max(0, int(max_missed_detections))
+        if landmark_filter is None:
+            landmark_filter = EmaFilter(smoothing) if smoothing is not None else OneEuroFilter()
+        self.filter = landmark_filter
+        self.reset()
+
+    def reset(self) -> None:
+        self.landmarks: np.ndarray | None = None   # raw prediction of the last frame (drives the crop)
         self.frames_since_detect = 0
         self.missed = 0
+        self.filter.reset()
 
     def _detected_box(self, frame: np.ndarray) -> Box | None:
         faces = self.predictor.detector.detect(frame)
         return self.predictor.detector.to_crop_box(faces[0]) if faces else None
 
-    def process(self, frame_rgb: np.ndarray) -> LiveResult:
+    def process(self, frame_rgb: np.ndarray, timestamp: float | None = None) -> LiveResult:
+        """`timestamp` in seconds (defaults to the wall clock; videos pass their frame time)."""
         t0 = time.perf_counter()
+        ts = t0 if timestamp is None else float(timestamp)
         seed: Box | None = None
         if self.landmarks is None or self.frames_since_detect >= self.redetect_every:
             self.frames_since_detect = 0
@@ -77,20 +163,20 @@ class LiveTracker:
 
         if seed is not None:  # new track: calibrated detector box plus one refinement pass
             pred = self.predictor.predict(frame_rgb, box=seed, refine_iterations=1)
-            lm, state = pred.landmarks, "detected"
-        else:                 # tracking: crop from the previous landmarks, single pass
+            state = "detected"
+            self.filter.reset()
+        else:                 # tracking: crop from the previous raw landmarks, single pass
             pred = self.predictor.predict(frame_rgb, box=self._track_box(), refine_iterations=0)
-            lm = pred.landmarks
-            if self.smoothing > 0:
-                lm = self.smoothing * self.landmarks + (1 - self.smoothing) * lm
             state = "tracking"
+        raw = pred.landmarks
         self.frames_since_detect += 1
 
-        if not np.isfinite(lm).all() or not _inside(lm, frame_rgb.shape):
+        if not np.isfinite(raw).all() or not _inside(raw, frame_rgb.shape):
             self.reset()
             return LiveResult(None, None, "searching", pred.model_ms, (time.perf_counter() - t0) * 1000)
-        self.landmarks = lm.astype(np.float32)
-        return LiveResult(self.landmarks, pred.box, state, pred.model_ms, (time.perf_counter() - t0) * 1000)
+        self.landmarks = raw.astype(np.float32)
+        shown = self.filter(self.landmarks, ts, pred.box[2])
+        return LiveResult(shown, pred.box, state, pred.model_ms, (time.perf_counter() - t0) * 1000, raw=self.landmarks)
 
     def _track_box(self) -> Box:
         return landmark_box(self.landmarks, self.predictor.box_scale)
@@ -174,7 +260,7 @@ def run(predictor: LandmarkPredictor, source: int | str, live_cfg: dict[str, Any
     mirror = bool(live_cfg.get("mirror", True)) if mirror is None else mirror
     cap = open_capture(source, int(live_cfg.get("width", 640)), int(live_cfg.get("height", 480)))
     tracker = LiveTracker(predictor, live_cfg.get("redetect_every", 15),
-                          live_cfg.get("max_missed_detections", 2), live_cfg.get("smoothing", 0.4))
+                          live_cfg.get("max_missed_detections", 2), landmark_filter=make_filter(live_cfg))
     fps, writer, draw_mesh = FpsMeter(), None, True
     counts = {"frames": 0, "detected": 0, "tracking": 0, "searching": 0}
     model_ms: list[float] = []

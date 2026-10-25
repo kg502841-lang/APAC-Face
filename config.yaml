@@ -78,6 +78,16 @@ experiments:
     balanced_sampling: true
     detector_crop_prob: 0.5     # needs data/cache/detector_boxes.npz (python -m src.mediapipe_baseline --export-boxes)
     select_on: detector         # canonical | detector
+  heatmap:
+    label: Heatmap (multi-scale)
+    description: Detector-robust recipe with a multi-scale heatmap head and soft-argmax instead of global pooling + MLP.
+    augment: true
+    balanced_sampling: true
+    detector_crop_prob: 0.5
+    select_on: detector
+    model:
+      head: heatmap             # regression | heatmap
+      decoder_dim: 96
 
 eval:
   baseline: baseline
@@ -87,13 +97,15 @@ eval:
   bootstrap_samples: 2000
 
 inference:
-  # Deployed model. "robust" is better whenever a face detector supplies the box (WFLW val, Haar boxes +
-  # 2 refinements: 4.93% vs 5.11% NME; test, MediaPipe boxes: 6.51% vs 6.60%); "proposed" is marginally
-  # better on the standard annotated-crop protocol and stays the headline model of the baseline comparison.
-  default_model: robust
-  web_model: robust           # model exported to the Faceify web app (python -m src.export_web)
+  # Deployed model. "heatmap" beats "robust" on every protocol measured: WFLW test 98-pt NME 5.20% vs 6.49%;
+  # MediaPipe face location, 68 pts 5.15% vs 6.51%; WFLW val, Haar boxes + 2 refinements 3.65% vs 4.93%.
+  # "proposed" stays the headline model of the baseline-vs-proposed comparison.
+  default_model: heatmap
+  web_model: heatmap          # model exported to the Faceify web app (python -m src.export_web)
   refine_iterations: 2        # re-crop around the previous prediction, matching the training crop.
-                              # Tuned on WFLW val (detector boxes): 0 -> 5.98%, 1 -> 5.27%, 2 -> 5.11%, 3 -> 5.03% NME
+                              # Tuned on WFLW val (Haar boxes), heatmap: 0 -> 4.23%, 1 -> 3.81%, 2 -> 3.65%, 3 -> 3.60%
+                              # (robust: 5.98 / 5.27 / 5.11 / 5.03%). MediaPipe seeds need no refinement (val, heatmap:
+                              # 4.61% -> 4.59% with one pass), so the web app runs a single pass.
   max_upload_mb: 10
 
 live:                         # webcam mode: python -m src.inference --webcam, dashboard "Live Camera"
@@ -103,7 +115,13 @@ live:                         # webcam mode: python -m src.inference --webcam, d
   mirror: true                # selfie view
   redetect_every: 15          # frames between face-detector checks while tracking
   max_missed_detections: 2    # consecutive detector misses before the track is dropped
-  smoothing: 0.4              # weight of the previous frame's landmarks (0 = off); higher = steadier, laggier
+  filter: one_euro            # one_euro | ema | none (tuned on WFLW val with python -m src.video_eval)
+  # One Euro settings chosen on WFLW val (src/video_eval.py --tune): still jitter 1.01% -> 0.42% of the
+  # inter-ocular distance (MediaPipe 0.43%) for +0.3 pts NME; motion NME 6.40% vs MediaPipe 6.95%.
+  min_cutoff: 0.3             # One Euro: cutoff (Hz) when still - lower = steadier
+  beta: 20.0                  # One Euro: cutoff increase per face-size/s of motion - higher = less lag
+  d_cutoff: 1.0
+  smoothing: 0.4              # ema only: weight of the previous frame's landmarks
 
 mediapipe:                    # external baseline: python -m src.mediapipe_baseline
   train_faces: 2000           # WFLW training faces used to learn MediaPipe's convention offset

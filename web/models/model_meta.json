@@ -1,15 +1,15 @@
 {
-  "name": "APAC-Face Detector-robust",
+  "name": "APAC-Face Heatmap (multi-scale)",
   "model_file": "apac_face.onnx",
   "input_name": "image",
   "output_name": "landmarks",
-  "experiment": "robust",
+  "experiment": "heatmap",
   "input_size": 224,
   "box_scale": 1.2,
-  "val_nme": 0.05952808695193648,
-  "epoch": 59,
-  "onnx_max_abs_diff": 2.384185791015625e-07,
-  "onnx_sha256": "7d6e144e7cb95b07b4718fedb6c1811e45b1e2442779a2648a2d82dc581b03d5",
+  "val_nme": 0.04789754559998103,
+  "epoch": 57,
+  "onnx_max_abs_diff": 6.258487701416016e-07,
+  "onnx_sha256": "c4d8b88f678af557048ba13daf689c8994bd2d14991d96728751fbf4d70f3149",
   "mean": [
     0.48500001430511475,
     0.4560000002384186,
@@ -23,8 +23,11 @@
   "num_landmarks": 98,
   "mediapipe_seed_refine_iterations": 0,
   "live": {
-    "smoothing": 0.4,
-    "redetect_every": 15
+    "redetect_every": 15,
+    "filter": "one_euro",
+    "min_cutoff": 0.3,
+    "beta": 20.0,
+    "d_cutoff": 1.0
   },
   "wflw_to_68": [
     0,
@@ -318,5 +321,5 @@
     "dx": -0.001278246520087123,
     "dy": 0.08092279732227325
   },
-  "exported": "2026-10-23 02:06:22"
+  "exported": "2026-10-26 02:32:02"
 }

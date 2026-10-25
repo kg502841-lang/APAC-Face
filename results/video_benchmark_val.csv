@@ -1,0 +1,5 @@
+method,still_jitter_pct,still_nme_pct,motion_nme_pct,all_nme_pct,failures_pct,ms_per_frame
+Google MediaPipe,0.428,6.71,6.95,6.86,2.47,11.2
+Heatmap (multi-scale) · none,1.140,4.25,4.45,4.38,1.25,18.5
+Heatmap (multi-scale) · ema,0.739,4.17,6.00,5.38,1.25,18.5
+Heatmap (multi-scale) · one_euro,0.450,4.14,4.88,4.63,1.25,18.5

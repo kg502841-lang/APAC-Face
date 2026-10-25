@@ -707,10 +707,12 @@
 
     const ac = state.benchmark.apac_consistency;
     if (ac && apacBody) {
+      // the deployed web model when the consistency run covered it, otherwise the "proposed" headline model
+      const shown = ac.models.includes(state.benchmark.web_model) ? state.benchmark.web_model : 'proposed';
       apacBody.innerHTML = Object.values(ac.groups).map(g => `
         <tr><td>${g.label}${g.apac ? '' : ' <span style="color:var(--faceify-text-dim)">(reference)</span>'}</td><td>${g.images}</td>
-        <td>${pct(g.models.baseline.flip)}</td><td class="fcf-win">${pct(g.models.proposed.flip)}</td>
-        <td>${pct(g.models.baseline.crop)}</td><td class="fcf-win">${pct(g.models.proposed.crop)}</td></tr>`).join('');
+        <td>${pct(g.models.baseline.flip)}</td><td class="fcf-win">${pct(g.models[shown].flip)}</td>
+        <td>${pct(g.models.baseline.crop)}</td><td class="fcf-win">${pct(g.models[shown].crop)}</td></tr>`).join('');
     }
 
     const innerSig = cmpCal.bootstrap_inner_nme_diff.p_value < 0.05;
@@ -956,7 +958,7 @@
         const scale = 380 / (380 + rotZ);
         return { x: cx + rotX * scale, y: cy + pt.y * scale, scale };
       });
-      ctx.strokeStyle = "rgba(0, 229, 255, 0.15)";
+      ctx.strokeStyle = "rgba(140, 191, 173, 0.18)";
       ctx.lineWidth = 0.8;
       for (let i = 0; i < projected.length; i++) {
         for (let j = i + 1; j < projected.length; j++) {
@@ -969,7 +971,7 @@
         }
       }
       for (const p of projected) {
-        ctx.fillStyle = `rgba(0, 229, 255, ${Math.max(0.2, (p.scale - 0.7) * 2)})`;
+        ctx.fillStyle = `rgba(140, 191, 173, ${Math.max(0.2, (p.scale - 0.7) * 2)})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 2.5 * p.scale, 0, 2 * Math.PI);
         ctx.fill();

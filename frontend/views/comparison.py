@@ -72,9 +72,10 @@ mpc = common.load_result_json("mediapipe_comparison.json")
 if mpc:
     st.markdown("#### Against Google MediaPipe (68 common points, real WFLW ground truth)")
     order = [k for k in ("mediapipe", "mediapipe_calibrated", "baseline", "augmented", "proposed",
-                         "proposed_mp_located", "robust", "robust_mp_located") if k in mpc["methods"]]
+                         "proposed_mp_located", "robust", "robust_mp_located", "heatmap", "heatmap_mp_located")
+             if k in mpc["methods"]]
     mp_colors = {"mediapipe": "#898781", "mediapipe_calibrated": "#c3c2b7", "proposed_mp_located": "#199e70",
-                 "robust_mp_located": "#c98500"}
+                 "robust_mp_located": "#c98500", "heatmap_mp_located": "#c9628a"}
     labels = [mpc["methods"][k]["label"] for k in order]
     vals = [mpc["methods"][k]["detected_faces"]["nme"] * 100 for k in order]
     fig = go.Figure(go.Bar(
@@ -104,8 +105,10 @@ if mpc:
         f"{c1['nme_reduction_pct']:.1f}% vs MediaPipe and {c2['nme_reduction_pct']:.1f}% vs offset-corrected MediaPipe "
         f"({common.p_text(c2['bootstrap_nme_diff']['p_value'])}). Inner face only (no jaw line), the corrected "
         + (f"MediaPipe is {-c2['inner_nme_reduction_pct']:.1f}% better than APAC-Face"
-           if c2['inner_nme_reduction_pct'] < 0 else f"baseline is {c2['inner_nme_reduction_pct']:.1f}% worse")
-        + f" ({common.p_text(c2['bootstrap_inner_nme_diff']['p_value'])}): the overall lead comes from the jaw line.")
+           f" ({common.p_text(c2['bootstrap_inner_nme_diff']['p_value'])}): the overall lead comes from the jaw line."
+           if c2['inner_nme_reduction_pct'] < 0 else
+           f"MediaPipe is also worse, by {c2['inner_nme_reduction_pct']:.1f}%"
+           f" ({common.p_text(c2['bootstrap_inner_nme_diff']['p_value'])}).")
 
 st.markdown("#### Cumulative error distribution")
 fig = go.Figure()

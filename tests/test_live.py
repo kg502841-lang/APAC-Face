@@ -83,3 +83,25 @@ def test_headless_video_run_records_output(predictor, tmp_path, monkeypatch):
 def test_hud_keeps_frame_shape():
     img = frame()
     assert draw_hud(img, ["a", "b"]).shape == img.shape
+
+
+def test_one_euro_filter_smooths_jitter_without_much_lag():
+    from src.live import OneEuroFilter
+    rng = np.random.default_rng(0)
+    base = rng.uniform(50, 150, (98, 2))
+    f = OneEuroFilter(min_cutoff=1.0, beta=10.0)
+    assert np.allclose(f(base, 0.0, 100.0), base)                      # first frame passes through
+    still = [f(base + rng.normal(0, 2, base.shape), t / 30, 100.0) for t in range(1, 60)]
+    assert np.std(np.stack(still)[20:], axis=0).mean() < 0.6 * 2.0     # >= 40% less jitter (raw std 2 px)
+    f.reset()
+    moving = [f(base + [t * 5.0, 0], t / 30, 100.0) for t in range(60)]  # 150 px/s = 1.5 faces/s
+    assert abs(moving[-1][0, 0] - (base[0, 0] + 59 * 5.0)) < 10        # follows with little lag
+
+
+def test_make_filter_choices():
+    from src.live import EmaFilter, NoFilter, OneEuroFilter, make_filter
+    assert isinstance(make_filter({}), OneEuroFilter)
+    assert isinstance(make_filter({"filter": "ema"}), EmaFilter)
+    assert isinstance(make_filter({"filter": "none"}), NoFilter)
+    with pytest.raises(ValueError):
+        make_filter({"filter": "kalman"})

@@ -41,8 +41,11 @@ with tab_video:
         mirror = st.toggle("Mirror", value=bool(live_cfg.get("mirror", True)), help="Selfie view")
     with c4:
         mesh = st.toggle("Face mesh", value=True, key="live_mesh")
-    smoothing = st.slider("Smoothing (steadier, slightly laggier)", 0.0, 0.9,
-                          float(live_cfg.get("smoothing", 0.4)), 0.1)
+    filters = {"one_euro": "One Euro (adaptive: steady when still, fast when moving)",
+               "ema": "Moving average (fixed smoothing)", "none": "None (raw predictions)"}
+    default_filter = live_cfg.get("filter", "one_euro")
+    filter_kind = st.selectbox("Smoothing filter", list(filters), format_func=filters.get,
+                               index=list(filters).index(default_filter) if default_filter in filters else 0)
     run = st.toggle("Start camera", value=False)
 
     frame_slot = st.empty()
@@ -51,11 +54,12 @@ with tab_video:
         frame_slot.info("Camera is off. Switch on **Start camera** to begin; switch it off to release the camera.",
                         icon=":material/videocam_off:")
     else:
-        from src.live import FpsMeter, LiveTracker, open_capture, render
+        from src.live import FpsMeter, LiveTracker, make_filter, open_capture, render
 
         predictor = predictors[model]
         tracker = LiveTracker(predictor, live_cfg.get("redetect_every", 15),
-                              live_cfg.get("max_missed_detections", 2), smoothing)
+                              live_cfg.get("max_missed_detections", 2),
+                              landmark_filter=make_filter({**live_cfg, "filter": filter_kind}))
         try:
             cap = open_capture(int(camera), int(live_cfg.get("width", 640)), int(live_cfg.get("height", 480)))
         except RuntimeError as e:

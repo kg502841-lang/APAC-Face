@@ -27,6 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from src import __version__
+from src.serve_web import ISOLATION_HEADERS
 from src.inference import (LandmarkPredictor, annotate, available_checkpoints, decode_image,
                            encode_png, load_predictors)
 from src.landmarks import interocular_distance
@@ -72,10 +73,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# The Faceify web app (static, runs both models in the browser) is served at /web/.
+# The Faceify web app (static, runs both models in the browser) is served at /web/, cross-origin isolated so
+# ONNX Runtime Web can use WebAssembly threads (src/serve_web.py does the same standalone).
 _WEB_DIR = resolve_path("web")
 if (_WEB_DIR / "index.html").is_file():
     app.mount("/web", StaticFiles(directory=_WEB_DIR, html=True), name="web")
+
+
+@app.middleware("http")
+async def _isolate_web_app(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/web"):
+        response.headers.update(ISOLATION_HEADERS)
+    return response
 
 
 def _default_model() -> str | None:

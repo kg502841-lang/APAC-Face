@@ -8,7 +8,7 @@
   <!-- Modern Clean Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
   <!-- Scoped Application Stylesheet -->
   <link rel="stylesheet" href="./styles/main.css">
@@ -270,7 +270,7 @@
                     <polyline points="21 15 16 10 5 21"></polyline>
                   </svg>
                 </div>
-                <h4 style="margin: 0 0 6px 0; color: #FFF;">Drag &amp; Drop Face Image Here</h4>
+                <h4 style="margin: 0 0 6px 0; color: var(--faceify-text-primary);">Drag &amp; Drop Face Image Here</h4>
                 <p style="font-size: 0.85rem; color: var(--faceify-text-muted); margin: 0 0 16px 0;">
                   Supports JPG, JPEG, PNG &bull; Processed 100% locally
                 </p>
@@ -351,7 +351,7 @@
                 <div class="fcf-layers-group">
                   <div class="fcf-layer-check">
                     <label for="fcf-chk-landmarks">
-                      <span class="fcf-dot-indicator" style="background: var(--faceify-cyan);"></span>
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-overlay-mp);"></span>
                       Show Landmark Points
                     </label>
                     <input type="checkbox" id="fcf-chk-landmarks" checked>
@@ -359,7 +359,7 @@
 
                   <div class="fcf-layer-check">
                     <label for="fcf-chk-mesh">
-                      <span class="fcf-dot-indicator" style="background: rgba(0, 229, 255, 0.4);"></span>
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-overlay-mp-soft);"></span>
                       Show Mesh Connections
                     </label>
                     <input type="checkbox" id="fcf-chk-mesh" checked>
@@ -367,7 +367,7 @@
 
                   <div class="fcf-layer-check">
                     <label for="fcf-chk-pred">
-                      <span class="fcf-dot-indicator" style="background: var(--faceify-cyan);"></span>
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-overlay-mp);"></span>
                       Show Model Predictions
                     </label>
                     <input type="checkbox" id="fcf-chk-pred" checked>
@@ -375,7 +375,7 @@
 
                   <div class="fcf-layer-check">
                     <label for="fcf-chk-gt">
-                      <span class="fcf-dot-indicator" style="background: var(--faceify-emerald);"></span>
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-overlay-gt);"></span>
                       Show Ground Truth (68 pts)
                     </label>
                     <input type="checkbox" id="fcf-chk-gt" checked>
@@ -383,7 +383,7 @@
 
                   <div class="fcf-layer-check">
                     <label for="fcf-chk-vectors">
-                      <span class="fcf-dot-indicator" style="background: var(--faceify-crimson);"></span>
+                      <span class="fcf-dot-indicator" style="background: var(--faceify-overlay-err);"></span>
                       Show Error Vectors (Δ)
                     </label>
                     <input type="checkbox" id="fcf-chk-vectors" checked>
@@ -446,7 +446,7 @@
         <!-- Side-by-side: both models on the same face and the same 68 ground-truth points -->
         <div class="fcf-coords-box fcf-gt-compare">
           <div class="fcf-coords-header">
-            <span style="font-weight: 700; color: #FFF;">Google MediaPipe vs APAC-Face</span>
+            <span style="font-weight: 700; color: var(--faceify-text-primary);">Google MediaPipe vs APAC-Face</span>
             <span class="fcf-badge" style="margin:0; padding:3px 10px;">lower is better · winner highlighted</span>
           </div>
           <div class="fcf-table-scroll" style="max-height: none;">
@@ -492,14 +492,14 @@
 
         <div class="fcf-coords-box" style="margin-top: 24px;">
           <div class="fcf-coords-header">
-            <span style="font-weight: 700; color: #FFF;">Normalized Mean Error, 68 points · lower is better</span>
+            <span style="font-weight: 700; color: var(--faceify-text-primary);">Normalized Mean Error, 68 points · lower is better</span>
           </div>
           <div class="fcf-bar-chart" id="fcf-bench-chart" role="img" aria-label="NME of MediaPipe, offset-corrected MediaPipe and APAC-Face"></div>
         </div>
 
         <div class="fcf-bench-tables">
           <div class="fcf-coords-box">
-            <div class="fcf-coords-header"><span style="font-weight: 700; color: #FFF;">By WFLW challenge condition (NME)</span></div>
+            <div class="fcf-coords-header"><span style="font-weight: 700; color: var(--faceify-text-primary);">By WFLW challenge condition (NME)</span></div>
             <div class="fcf-table-scroll" style="max-height: none;">
               <table class="fcf-table">
                 <thead><tr><th>Condition</th><th>Faces</th><th>MediaPipe</th><th>MP corrected</th><th>APAC-Face</th></tr></thead>
@@ -508,7 +508,7 @@
             </div>
           </div>
           <div class="fcf-coords-box">
-            <div class="fcf-coords-header"><span style="font-weight: 700; color: #FFF;">By facial region (normalized error)</span></div>
+            <div class="fcf-coords-header"><span style="font-weight: 700; color: var(--faceify-text-primary);">By facial region (normalized error)</span></div>
             <div class="fcf-table-scroll" style="max-height: none;">
               <table class="fcf-table">
                 <thead><tr><th>Region</th><th>MediaPipe</th><th>MP corrected</th><th>APAC-Face</th></tr></thead>
@@ -520,7 +520,7 @@
 
         <div class="fcf-coords-box" style="margin-top: 24px;">
           <div class="fcf-coords-header">
-            <span style="font-weight: 700; color: #FFF;">APAC demographic groups · label-free consistency (lower is better)</span>
+            <span style="font-weight: 700; color: var(--faceify-text-primary);">APAC demographic groups · label-free consistency (lower is better)</span>
             <span class="fcf-badge fcf-badge-amber" style="margin:0; padding:3px 10px;">not accuracy: no ground truth</span>
           </div>
           <div class="fcf-table-scroll" style="max-height: none;">
@@ -563,7 +563,7 @@
           <div id="fcf-gallery-load-notes" style="text-align:center; font-size: 0.85rem; color: var(--faceify-amber);"></div>
 
           <!-- Search & Count Bar -->
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: rgba(0, 20, 50, 0.6); padding: 12px 20px; border-radius: var(--faceify-radius-md); border: 1px solid var(--faceify-border);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: var(--faceify-bg-card); padding: 12px 20px; border-radius: var(--faceify-radius-md); border: 1px solid var(--faceify-border);">
             <div style="display: flex; align-items: center; gap: 10px;">
               <span id="fcf-gallery-status-count" style="font-weight: 700; color: var(--faceify-cyan); font-size: 0.9rem;">
                 Loading samples ...
@@ -594,7 +594,7 @@
 
         <!-- Custom Dataset / Annotation Loader -->
         <div class="fcf-dataset-upload-box">
-          <h4 style="margin: 0; color: #FFF; font-size: 1.1rem;">Load Custom Annotation File</h4>
+          <h4 style="margin: 0; color: var(--faceify-text-primary); font-size: 1.1rem;">Load Custom Annotation File</h4>
           <p style="font-size: 0.85rem; color: var(--faceify-text-muted); margin: 0; max-width: 600px;">
             Have hand-annotated landmarks for your own photo? Upload them to measure both models' real error on it. Supports 68-point TXT (.pts), CSV (image_id, point_id, x, y) or JSON, in pixel coordinates of the loaded image.
           </p>
@@ -626,7 +626,7 @@
         <div class="fcf-coords-box">
           <div class="fcf-coords-header">
             <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="font-weight: 700; color: #FFF;">Detected Points:</span>
+              <span style="font-weight: 700; color: var(--faceify-text-primary);">Detected Points:</span>
               <span id="fcf-coords-count" class="fcf-badge" style="margin:0; padding:3px 10px;">468 points</span>
             </div>
 
@@ -830,7 +830,7 @@
           <div class="fcf-stages-flow">
             <div class="fcf-stage-item done">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="color: #FFF; font-size: 0.9rem;">Dataset Collection</strong>
+                <strong style="color: var(--faceify-text-primary); font-size: 0.9rem;">Dataset Collection</strong>
                 <span style="color: var(--faceify-emerald);">&check;</span>
               </div>
               <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">APAC diverse facial images curated &amp; verified</span>
@@ -838,7 +838,7 @@
 
             <div class="fcf-stage-item done">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="color: #FFF; font-size: 0.9rem;">Baseline Evaluation</strong>
+                <strong style="color: var(--faceify-text-primary); font-size: 0.9rem;">Baseline Evaluation</strong>
                 <span style="color: var(--faceify-emerald);">&check;</span>
               </div>
               <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">MediaPipe 468-point mesh benchmarked</span>
@@ -846,7 +846,7 @@
 
             <div class="fcf-stage-item done">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="color: #FFF; font-size: 0.9rem;">APAC Model Training</strong>
+                <strong style="color: var(--faceify-text-primary); font-size: 0.9rem;">APAC Model Training</strong>
                 <span style="color: var(--faceify-emerald);">&check;</span>
               </div>
               <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">MobileNetV2 fine-tuned on WFLW with augmentation + balanced sampling</span>
@@ -854,7 +854,7 @@
 
             <div class="fcf-stage-item done">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="color: #FFF; font-size: 0.9rem;">Model Comparison</strong>
+                <strong style="color: var(--faceify-text-primary); font-size: 0.9rem;">Model Comparison</strong>
                 <span style="color: var(--faceify-emerald);">&check;</span>
               </div>
               <span style="font-size: 0.78rem; color: var(--faceify-text-muted);">Live NME vs MediaPipe on real ground truth</span>
@@ -918,7 +918,7 @@
           </div>
 
           <div>
-            <h5 style="color: #FFF; font-size: 0.95rem; margin: 0 0 16px 0;">Platform</h5>
+            <h5 style="color: var(--faceify-text-primary); font-size: 0.95rem; margin: 0 0 16px 0;">Platform</h5>
             <ul class="fcf-footer-links">
               <li><a href="#fcf-landmark-studio">Landmark Studio</a></li>
               <li><a href="#ground-truth">Ground Truth Metrics</a></li>
@@ -928,7 +928,7 @@
           </div>
 
           <div>
-            <h5 style="color: #FFF; font-size: 0.95rem; margin: 0 0 16px 0;">Research</h5>
+            <h5 style="color: var(--faceify-text-primary); font-size: 0.95rem; margin: 0 0 16px 0;">Research</h5>
             <ul class="fcf-footer-links">
               <li><a href="#apac-model">APAC Inclusivity</a></li>
               <li><a href="#why-it-matters">Morphology Study</a></li>
@@ -938,7 +938,7 @@
           </div>
 
           <div>
-            <h5 style="color: #FFF; font-size: 0.95rem; margin: 0 0 16px 0;">Consultation</h5>
+            <h5 style="color: var(--faceify-text-primary); font-size: 0.95rem; margin: 0 0 16px 0;">Consultation</h5>
             <ul class="fcf-footer-links">
               <li><a href="#consultation-cta">Book Session</a></li>
               <li><a href="#contact">Clinic Partners</a></li>
@@ -949,7 +949,7 @@
         </div>
 
         <div class="fcf-disclaimer-bar">
-          <p style="margin: 0 0 6px 0; color: #FCD34D;">
+          <p style="margin: 0 0 6px 0; color: var(--faceify-amber);">
             <strong>Medical Disclaimer:</strong> AI visualization and facial landmark detection only. Not a medical diagnosis or treatment recommendation.
           </p>
           <p style="margin: 0;">

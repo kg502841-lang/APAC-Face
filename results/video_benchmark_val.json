@@ -1,0 +1,229 @@
+{
+  "generated": "2026-10-26 01:50:22",
+  "split": "val",
+  "sequences": 40,
+  "frames_per_sequence": 90,
+  "fps": 30,
+  "protocol": "WFLW faces with manual annotations animated (1 s still, 2 s moving) with camera noise (Gaussian sigma 6, gain/brightness flicker, JPEG q75); 68 common points; NME / jitter normalised by the per-frame inter-ocular distance",
+  "filters": {
+    "ema": {
+      "smoothing": 0.4
+    },
+    "one_euro": {
+      "min_cutoff": 0.3,
+      "beta": 20.0,
+      "d_cutoff": 1.0
+    }
+  },
+  "methods": {
+    "Google MediaPipe": {
+      "still_jitter": 0.004279501505813334,
+      "still_nme": 0.06711387286471746,
+      "motion_nme": 0.06949938126352831,
+      "all_nme": 0.0686076340577692,
+      "failures": 0.024722222222222222,
+      "still_jitter_median": 0.0018090462544932961,
+      "ms_per_frame": 11.201343944444995
+    },
+    "Heatmap (multi-scale) \u00b7 none": {
+      "still_jitter": 0.011399984464515001,
+      "still_nme": 0.04245290867984295,
+      "motion_nme": 0.04449320998974145,
+      "all_nme": 0.04376356587745249,
+      "failures": 0.0125,
+      "still_jitter_median": 0.009093664586544037,
+      "ms_per_frame": 18.51013563890269
+    },
+    "Heatmap (multi-scale) \u00b7 ema": {
+      "still_jitter": 0.007388959755189717,
+      "still_nme": 0.0417263446841389,
+      "motion_nme": 0.06001629587262869,
+      "all_nme": 0.05381217999383807,
+      "failures": 0.0125,
+      "still_jitter_median": 0.005718543427065015,
+      "ms_per_frame": 18.51013563890269
+    },
+    "Heatmap (multi-scale) \u00b7 one_euro": {
+      "still_jitter": 0.004498217633226886,
+      "still_nme": 0.04143752572126687,
+      "motion_nme": 0.048793506855145094,
+      "all_nme": 0.04628040124662221,
+      "failures": 0.0125,
+      "still_jitter_median": 0.00301079370547086,
+      "ms_per_frame": 18.51013563890269
+    }
+  },
+  "one_euro_grid": {
+    "heatmap min_cutoff=0.3 beta=2.0": {
+      "still_jitter": 0.0028726105578243733,
+      "still_nme": 0.041252737818285826,
+      "motion_nme": 0.09463069643825292,
+      "all_nme": 0.07665689950808882,
+      "failures": 0.0125,
+      "still_jitter_median": 0.002110505593009293
+    },
+    "heatmap min_cutoff=0.3 beta=5.0": {
+      "still_jitter": 0.0031793757691048084,
+      "still_nme": 0.04131211047060788,
+      "motion_nme": 0.06713182060047984,
+      "all_nme": 0.05841360948979855,
+      "failures": 0.0125,
+      "still_jitter_median": 0.002228730358183384
+    },
+    "heatmap min_cutoff=0.3 beta=10.0": {
+      "still_jitter": 0.0036777060391614213,
+      "still_nme": 0.04136346038430929,
+      "motion_nme": 0.05514265568926931,
+      "all_nme": 0.05047015086747706,
+      "failures": 0.0125,
+      "still_jitter_median": 0.002474992419593036
+    },
+    "heatmap min_cutoff=0.3 beta=20.0": {
+      "still_jitter": 0.004498217633226886,
+      "still_nme": 0.04143752572126687,
+      "motion_nme": 0.048793506855145094,
+      "all_nme": 0.04628040124662221,
+      "failures": 0.0125,
+      "still_jitter_median": 0.00301079370547086
+    },
+    "heatmap min_cutoff=0.3 beta=40.0": {
+      "still_jitter": 0.005597225442761556,
+      "still_nme": 0.04154385235160589,
+      "motion_nme": 0.04595938068814576,
+      "all_nme": 0.04443497429601848,
+      "failures": 0.0125,
+      "still_jitter_median": 0.0038185399025678635
+    },
+    "heatmap min_cutoff=0.6 beta=2.0": {
+      "still_jitter": 0.0031730575719848275,
+      "still_nme": 0.041251918440684675,
+      "motion_nme": 0.0905729291960597,
+      "all_nme": 0.0739577573724091,
+      "failures": 0.0125,
+      "still_jitter_median": 0.002310337033122778
+    },
+    "heatmap min_cutoff=0.6 beta=5.0": {
+      "still_jitter": 0.003483119132579304,
+      "still_nme": 0.041320124128833416,
+      "motion_nme": 0.0657927991822362,
+      "all_nme": 0.05752365132793784,
+      "failures": 0.0125,
+      "still_jitter_median": 0.00244218239095062
+    },
+    "heatmap min_cutoff=0.6 beta=10.0": {
+      "still_jitter": 0.003964784406707622,
+      "still_nme": 0.041377704869955775,
+      "motion_nme": 0.05465076640248299,
+      "all_nme": 0.050145625974982976,
+      "failures": 0.0125,
+      "still_jitter_median": 0.002694830414839089
+    },
+    "heatmap min_cutoff=0.6 beta=20.0": {
+      "still_jitter": 0.004725146823329851,
+      "still_nme": 0.0414528694935143,
+      "motion_nme": 0.04864074462093413,
+      "all_nme": 0.04618237912654877,
+      "failures": 0.0125,
+      "still_jitter_median": 0.0031890759710222483
+    },
+    "heatmap min_cutoff=0.6 beta=40.0": {
+      "still_jitter": 0.0057409827248193325,
+      "still_nme": 0.04155681328848004,
+      "motion_nme": 0.04591932389885187,
+      "all_nme": 0.04441185053437948,
+      "failures": 0.0125,
+      "still_jitter_median": 0.003942201612517238
+    },
+    "heatmap min_cutoff=1.0 beta=2.0": {
+      "still_jitter": 0.0036296061705797912,
+      "still_nme": 0.04128682464361191,
+      "motion_nme": 0.08573757084086538,
+      "all_nme": 0.07075386885553599,
+      "failures": 0.0125,
+      "still_jitter_median": 0.0026403837837278843
+    },
+    "heatmap min_cutoff=1.0 beta=5.0": {
+      "still_jitter": 0.00392710625892505,
+      "still_nme": 0.04134777402505278,
+      "motion_nme": 0.06415295284241437,
+      "all_nme": 0.056440500821918246,
+      "failures": 0.0125,
+      "still_jitter_median": 0.002786987111903727
+    },
+    "heatmap min_cutoff=1.0 beta=10.0": {
+      "still_jitter": 0.004358735459391028,
+      "still_nme": 0.04140385608188808,
+      "motion_nme": 0.0540401874575764,
+      "all_nme": 0.049746287241578105,
+      "failures": 0.0125,
+      "still_jitter_median": 0.0030308252898976207
+    },
+    "heatmap min_cutoff=1.0 beta=20.0": {
+      "still_jitter": 0.005029113436467014,
+      "still_nme": 0.04147651321254671,
+      "motion_nme": 0.048449126956984404,
+      "all_nme": 0.04606125438585877,
+      "failures": 0.0125,
+      "still_jitter_median": 0.003469102317467332
+    },
+    "heatmap min_cutoff=1.0 beta=40.0": {
+      "still_jitter": 0.005938500602496788,
+      "still_nme": 0.0415757501963526,
+      "motion_nme": 0.0458688058424741,
+      "all_nme": 0.04438368403352797,
+      "failures": 0.0125,
+      "still_jitter_median": 0.004139800788834691
+    },
+    "heatmap min_cutoff=2.0 beta=2.0": {
+      "still_jitter": 0.004705807857681066,
+      "still_nme": 0.04139300840906799,
+      "motion_nme": 0.07609136505052447,
+      "all_nme": 0.06437785439193248,
+      "failures": 0.0125,
+      "still_jitter_median": 0.0035054385662078857
+    },
+    "heatmap min_cutoff=2.0 beta=5.0": {
+      "still_jitter": 0.004920056957053021,
+      "still_nme": 0.041433290438726546,
+      "motion_nme": 0.060688893776386976,
+      "all_nme": 0.05416424432769418,
+      "failures": 0.0125,
+      "still_jitter_median": 0.0036051025381311774
+    },
+    "heatmap min_cutoff=2.0 beta=10.0": {
+      "still_jitter": 0.005225663469173014,
+      "still_nme": 0.04147762646898627,
+      "motion_nme": 0.052712915604934095,
+      "all_nme": 0.048885876405984165,
+      "failures": 0.0125,
+      "still_jitter_median": 0.003784504719078541
+    },
+    "heatmap min_cutoff=2.0 beta=20.0": {
+      "still_jitter": 0.00571302903117612,
+      "still_nme": 0.041538845375180246,
+      "motion_nme": 0.048023459315299985,
+      "all_nme": 0.04579666531644762,
+      "failures": 0.0125,
+      "still_jitter_median": 0.004102778155356646
+    },
+    "heatmap min_cutoff=2.0 beta=40.0": {
+      "still_jitter": 0.0064120750816073265,
+      "still_nme": 0.04162547471933067,
+      "motion_nme": 0.045754948537796734,
+      "all_nme": 0.044323018612340094,
+      "failures": 0.0125,
+      "still_jitter_median": 0.004601189401000738
+    }
+  },
+  "one_euro_best": {
+    "heatmap": {
+      "setting": "heatmap min_cutoff=2.0 beta=40.0",
+      "still_jitter": 0.0064120750816073265,
+      "still_nme": 0.04162547471933067,
+      "motion_nme": 0.045754948537796734,
+      "all_nme": 0.044323018612340094,
+      "failures": 0.0125,
+      "still_jitter_median": 0.004601189401000738
+    }
+  }
+}

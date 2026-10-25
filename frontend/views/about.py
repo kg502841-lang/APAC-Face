@@ -58,8 +58,8 @@ APAC populations.</li>
 <li>The APAC analysis is label-free (flip and crop consistency). It detects instability, not a
 consistent bias, so it cannot prove per-population accuracy.</li>
 <li>Demographic labels in the APAC set are annotator-perceived categories, coarse by nature.</li>
-<li>Direct coordinate regression with global pooling is simpler (and less accurate) than heatmap
-models such as HRNet or STAR.</li>
+<li>The deployed heatmap model on MobileNetV2 is small next to research models such as HRNet or STAR,
+and predicts WFLW's 98 manually annotated points, not a dense mesh.</li>
 <li>The Haar detector is frontal-only; profile faces may be missed and fall back to a centre crop.</li>
 </ul>""")
 

@@ -27,3 +27,10 @@ robust,illumination,698,6.248,9.46,0.4202
 robust,makeup,206,6.116,10.19,0.4241
 robust,occlusion,736,7.324,18.21,0.3522
 robust,blur,773,7.161,14.36,0.3539
+heatmap,full,2500,5.198,7.00,0.5107
+heatmap,pose,326,8.920,27.91,0.2358
+heatmap,expression,314,5.603,5.73,0.4741
+heatmap,illumination,698,5.152,5.87,0.5186
+heatmap,makeup,206,5.068,6.31,0.5200
+heatmap,occlusion,736,6.553,14.27,0.4133
+heatmap,blur,773,6.112,9.96,0.4398

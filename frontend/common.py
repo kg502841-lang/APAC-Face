@@ -22,8 +22,9 @@ from src.utils import load_config, load_json, resolve_path  # noqa: E402
 API_URL = os.environ.get("APAC_API_URL", "http://127.0.0.1:8000").rstrip("/")
 
 # Chart colours follow the model (validated colour-blind-safe set); chrome uses the brand accents.
-MODEL_COLORS = {"baseline": "#2a78d6", "augmented": "#eb6834", "proposed": "#1baf7a", "robust": "#eda100"}
-EXTRA_COLORS = ["#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
+MODEL_COLORS = {"baseline": "#2a78d6", "augmented": "#eb6834", "proposed": "#1baf7a", "robust": "#eda100",
+                "heatmap": "#e87ba4"}
+EXTRA_COLORS = ["#008300", "#6250d6", "#e34948"]
 INK, INK_2, MUTED, GRID, AXIS, SURFACE = "#0f1b3d", "#52514e", "#898781", "#e1e0d9", "#c3c2b7", "#ffffff"
 
 CSS = """

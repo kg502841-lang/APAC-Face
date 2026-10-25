@@ -1,0 +1,111 @@
+{
+  "generated": "2026-10-26 02:08:12",
+  "split": "test",
+  "sequences": 60,
+  "frames_per_sequence": 90,
+  "fps": 30,
+  "protocol": "WFLW faces with manual annotations animated (1 s still, 2 s moving) with camera noise (Gaussian sigma 6, gain/brightness flicker, JPEG q75); 68 common points; NME / jitter normalised by the per-frame inter-ocular distance",
+  "filters": {
+    "ema": {
+      "smoothing": 0.4
+    },
+    "one_euro": {
+      "min_cutoff": 0.3,
+      "beta": 20.0,
+      "d_cutoff": 1.0
+    }
+  },
+  "methods": {
+    "Google MediaPipe": {
+      "still_jitter": 0.018126046843090802,
+      "still_nme": 0.12139673292209133,
+      "motion_nme": 0.13584578109562595,
+      "all_nme": 0.13504002276004592,
+      "failures": 0.09962962962962964,
+      "still_jitter_median": 0.0023962093982845545,
+      "still_nme_median": 0.062154822051525116,
+      "motion_nme_median": 0.06627948277582643,
+      "all_nme_median": 0.06588644534349442,
+      "lost_tracks": 0.25,
+      "ms_per_frame": 7.583954740742532
+    },
+    "Detector-robust \u00b7 none": {
+      "still_jitter": 0.010690081229602749,
+      "still_nme": 0.11388492983850566,
+      "motion_nme": 0.14056596453538386,
+      "all_nme": 0.13618107354741985,
+      "failures": 0.05185185185185185,
+      "still_jitter_median": 0.009547466412186623,
+      "still_nme_median": 0.050565578043460846,
+      "motion_nme_median": 0.058831583708524704,
+      "all_nme_median": 0.05645341798663139,
+      "lost_tracks": 0.21666666666666667,
+      "ms_per_frame": 11.431706518525498
+    },
+    "Detector-robust \u00b7 ema": {
+      "still_jitter": 0.0071282788687808945,
+      "still_nme": 0.11346247843043371,
+      "motion_nme": 0.153247681020175,
+      "all_nme": 0.14478553477990425,
+      "failures": 0.05185185185185185,
+      "still_jitter_median": 0.006251862738281488,
+      "still_nme_median": 0.04967384785413742,
+      "motion_nme_median": 0.07200770825147629,
+      "all_nme_median": 0.06530027091503143,
+      "lost_tracks": 0.23333333333333334,
+      "ms_per_frame": 11.431706518525498
+    },
+    "Detector-robust \u00b7 one_euro": {
+      "still_jitter": 0.004251598321240057,
+      "still_nme": 0.11321541863408956,
+      "motion_nme": 0.14477410704150037,
+      "all_nme": 0.138885755754881,
+      "failures": 0.05185185185185185,
+      "still_jitter_median": 0.0030696375761181116,
+      "still_nme_median": 0.04952102154493332,
+      "motion_nme_median": 0.06269014626741409,
+      "all_nme_median": 0.05920417979359627,
+      "lost_tracks": 0.23333333333333334,
+      "ms_per_frame": 11.431706518525498
+    },
+    "Heatmap (multi-scale) \u00b7 none": {
+      "still_jitter": 0.012506908821788702,
+      "still_nme": 0.10161449787291614,
+      "motion_nme": 0.10222381296551834,
+      "all_nme": 0.10319662772876731,
+      "failures": 0.05185185185185185,
+      "still_jitter_median": 0.011513118632137775,
+      "still_nme_median": 0.04066798835992813,
+      "motion_nme_median": 0.04233909398317337,
+      "all_nme_median": 0.042607370764017105,
+      "lost_tracks": 0.15,
+      "ms_per_frame": 12.340734425751082
+    },
+    "Heatmap (multi-scale) \u00b7 ema": {
+      "still_jitter": 0.008117879821326245,
+      "still_nme": 0.10087545825676485,
+      "motion_nme": 0.11645713922078327,
+      "all_nme": 0.11276762648406675,
+      "failures": 0.05185185185185185,
+      "still_jitter_median": 0.007625445257872343,
+      "still_nme_median": 0.03957527503371239,
+      "motion_nme_median": 0.0560155026614666,
+      "all_nme_median": 0.05196050554513931,
+      "lost_tracks": 0.16666666666666666,
+      "ms_per_frame": 12.340734425751082
+    },
+    "Heatmap (multi-scale) \u00b7 one_euro": {
+      "still_jitter": 0.004982897732406855,
+      "still_nme": 0.10057039426809007,
+      "motion_nme": 0.10637260070544179,
+      "all_nme": 0.10572862779816329,
+      "failures": 0.05185185185185185,
+      "still_jitter_median": 0.004237029701471329,
+      "still_nme_median": 0.03926748409867287,
+      "motion_nme_median": 0.04547931253910065,
+      "all_nme_median": 0.0438251793384552,
+      "lost_tracks": 0.16666666666666666,
+      "ms_per_frame": 12.340734425751082
+    }
+  }
+}

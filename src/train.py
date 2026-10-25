@@ -25,7 +25,7 @@ from .augmentations import AugmentationParams, LandmarkAugmenter, apply_affine, 
 from .dataset import (ATTRIBUTES, DatasetNotFoundError, WFLWCropDataset, balanced_sample_weights,
                       build_cache, canonical_cache_box, load_detector_boxes)
 from .metrics import per_sample_nme
-from .model import build_model, count_parameters, save_inference_checkpoint
+from .model import build_model, count_parameters, model_config, save_inference_checkpoint
 from .utils import (LOG_FORMAT, auto_batch_size, describe_device, get_device, get_logger,
                     load_config, resolve_path, save_json, seed_worker, set_seed)
 
@@ -172,7 +172,7 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
     val_det_loader = (DataLoader(val_det_ds, batch_size=bs * 2, shuffle=False, num_workers=0,
                                  pin_memory=device.type == "cuda") if val_det_ds is not None else None)
 
-    model = build_model(cfg["model"]).to(device)
+    model = build_model(model_config(cfg, experiment)).to(device)
     shape0 = mean_shape(cfg, train_ds)
     model.init_mean_shape(shape0)
     criterion = make_loss(tcfg)

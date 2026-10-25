@@ -44,7 +44,7 @@ POINT_FAIL = 0.08   # the Faceify app's per-point "clinical tolerance" (normalis
 class MediaPipeLandmarker:
     """Thin wrapper around the MediaPipe Tasks FaceLandmarker (IMAGE mode, one face)."""
 
-    def __init__(self, model_path: str | Path, min_confidence: float = 0.5):
+    def __init__(self, model_path: str | Path, min_confidence: float = 0.5, video: bool = False):
         try:
             import mediapipe as mp
             from mediapipe.tasks.python import BaseOptions, vision
@@ -57,16 +57,20 @@ class MediaPipeLandmarker:
         self._mp = mp
         options = vision.FaceLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=str(path)),
-            running_mode=vision.RunningMode.IMAGE, num_faces=1,
-            min_face_detection_confidence=min_confidence, min_face_presence_confidence=min_confidence)
+            running_mode=vision.RunningMode.VIDEO if video else vision.RunningMode.IMAGE, num_faces=1,
+            min_face_detection_confidence=min_confidence, min_face_presence_confidence=min_confidence,
+            min_tracking_confidence=min_confidence)
         self._landmarker = vision.FaceLandmarker.create_from_options(options)
+        self.video = video
         self.version = mp.__version__
 
-    def detect(self, image_rgb: np.ndarray) -> np.ndarray | None:
-        """(478, 2) landmarks in OpenCV pixel coordinates (pixel centres at integers), or None."""
+    def detect(self, image_rgb: np.ndarray, timestamp_ms: int | None = None) -> np.ndarray | None:
+        """(478, 2) landmarks in OpenCV pixel coordinates (pixel centres at integers), or None.
+        In video mode pass increasing `timestamp_ms`: MediaPipe then tracks between frames."""
         h, w = image_rgb.shape[:2]
         image = self._mp.Image(image_format=self._mp.ImageFormat.SRGB, data=np.ascontiguousarray(image_rgb))
-        result = self._landmarker.detect(image)
+        result = (self._landmarker.detect_for_video(image, int(timestamp_ms)) if self.video
+                  else self._landmarker.detect(image))
         if not result.face_landmarks:
             return None
         pts = np.array([(p.x * w, p.y * h) for p in result.face_landmarks[0]], np.float32)
@@ -216,6 +220,10 @@ def score(pred68: np.ndarray, gt68: np.ndarray, thr: float) -> dict[str, Any]:
         "failure_rate": failure_rate(nme, thr),
         "auc": auc(nme, thr),
         "point_failure_rate": float(np.mean(dist[ok] / iod[ok, None] > POINT_FAIL)) if ok.any() else float("nan"),
+        "median_point_error_px": float(np.median(dist[ok])) if ok.any() else float("nan"),
+        # share of individual landmarks within 5 / 8 / 10% of the inter-ocular distance
+        "points_within": {f"{t:.2f}": float(np.mean(dist[ok] / iod[ok, None] <= t)) if ok.any() else float("nan")
+                          for t in (0.05, 0.08, 0.10)},
         "regions": {name: float(np.nanmean(dist[ok][:, a:b] / iod[ok, None])) for name, a, b in
                     (("Jawline", 0, 17), ("Eyebrows", 17, 27), ("Nose", 27, 36), ("Eyes", 36, 48), ("Mouth", 48, 68))},
         "_nme": nme,
@@ -364,15 +372,16 @@ def main() -> None:
 
 
 def _figures(report: dict[str, Any], res: Path, thr: float) -> None:
-    order = [k for k in ("mediapipe", "mediapipe_calibrated", "baseline", "proposed", "proposed_mp_located",
-                         "robust", "robust_mp_located") if k in report["methods"]]
+    order = [k for k in ("mediapipe", "mediapipe_calibrated", "baseline", "proposed", "robust", "robust_mp_located",
+                         "heatmap", "heatmap_mp_located") if k in report["methods"]]
     short = {"mediapipe": "MediaPipe", "mediapipe_calibrated": "MediaPipe\ncorrected", "baseline": "Baseline\nGT crop",
              "proposed": "Proposed\nGT crop", "proposed_mp_located": "Proposed\nMP-located",
-             "robust": "Robust\nGT crop", "robust_mp_located": "Robust\nMP-located"}
+             "robust": "Robust\nGT crop", "robust_mp_located": "Robust\nMP-located",
+             "heatmap": "Heatmap\nGT crop", "heatmap_mp_located": "Heatmap\nMP-located"}
     labels = [short.get(k, report["methods"][k]["label"]) for k in order]
     d = [report["methods"][k]["detected_faces"] for k in order]
     colors = {"mediapipe": "#898781", "mediapipe_calibrated": "#c3c2b7", "proposed_mp_located": "#199e70",
-              "robust_mp_located": "#c98500"}
+              "robust_mp_located": "#c98500", "heatmap_mp_located": "#c9628a"}
     plotting.MODEL_COLORS.update(colors)
     plotting.bar_panels(
         res / "mediapipe_comparison.png", order, labels,
@@ -380,7 +389,7 @@ def _figures(report: dict[str, Any], res: Path, thr: float) -> None:
          ("Mean error (px) - lower is better", [x["mean_error_px"] for x in d], "{:.2f}"),
          (f"Failure rate @{thr * 100:.0f}% (%)", [x["failure_rate"] * 100 for x in d], "{:.2f}")],
         f"Google MediaPipe vs APAC-Face on WFLW test ({report['faces_detected']:,} faces MediaPipe detected)")
-    sub_order = [k for k in ("mediapipe", "mediapipe_calibrated", "proposed_mp_located", "robust_mp_located")
+    sub_order = [k for k in ("mediapipe", "mediapipe_calibrated", "robust_mp_located", "heatmap_mp_located")
                  if k in report["subsets"]]
     groups = [ATTRIBUTE_LABELS[a].replace(" ", "\n", 1) for a in ATTRIBUTES]
     vals = np.array([[report["subsets"][k][a]["nme"] * 100 for a in ATTRIBUTES] for k in sub_order])

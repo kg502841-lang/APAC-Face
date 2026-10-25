@@ -85,7 +85,8 @@ def model_meta(cfg: dict[str, Any], onnx_info: dict[str, Any]) -> dict[str, Any]
         # Crops seeded from MediaPipe's face location are not re-cropped: on WFLW validation extra
         # passes raised NME (1 pass 5.89%, 2 passes 5.92%, 4 passes 5.99%).
         "mediapipe_seed_refine_iterations": 0,
-        "live": {k: cfg.get("live", {}).get(k) for k in ("smoothing", "redetect_every")},
+        "live": {k: cfg.get("live", {}).get(k)
+                 for k in ("redetect_every", "filter", "min_cutoff", "beta", "d_cutoff")},
         "wflw_to_68": list(WFLW_TO_68), "mediapipe_to_68": list(MEDIAPIPE_TO_68),
         "topology": {name: {"points": list(idx), "closed": closed} for name, (idx, closed) in TOPOLOGY.items()},
         "pupils": list(PUPILS),
@@ -197,7 +198,7 @@ def main() -> None:
         log.info("APAC gallery: %d photos", export_apac_gallery(apac_src, web, args.apac_per_group, int(cfg["seed"])))
     except FileNotFoundError as e:
         log.warning("APAC gallery skipped: %s", str(e).splitlines()[0])
-    log.info("Done. Serve the app: python -m http.server 8080 --directory web  (or /web on the API)")
+    log.info("Done. Serve the app: python -m src.serve_web  (or /web on the API)")
 
 
 if __name__ == "__main__":

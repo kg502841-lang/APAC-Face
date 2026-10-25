@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
-MODEL_COLORS = {"baseline": SERIES[0], "augmented": SERIES[1], "proposed": SERIES[2], "robust": SERIES[3]}
+MODEL_COLORS = {"baseline": SERIES[0], "augmented": SERIES[1], "proposed": SERIES[2], "robust": SERIES[3],
+                "heatmap": SERIES[4]}
 SURFACE, INK, INK_2, MUTED, GRID, AXIS = "#fcfcfb", "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7"
 
 
@@ -23,7 +24,7 @@ def model_color(name: str, order: Sequence[str]) -> str:
     if name in MODEL_COLORS:
         return MODEL_COLORS[name]
     extra = [n for n in order if n not in MODEL_COLORS]
-    return SERIES[(3 + extra.index(name)) % len(SERIES)]
+    return SERIES[(5 + extra.index(name)) % len(SERIES)]
 
 
 def _setup() -> None:
