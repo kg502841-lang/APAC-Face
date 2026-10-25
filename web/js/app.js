@@ -54,6 +54,11 @@
     UI.app = document.getElementById('faceify-landmark-app');
     UI.tabWebcam = document.getElementById('fcf-tab-webcam');
     UI.tabUpload = document.getElementById('fcf-tab-upload');
+    UI.tabCapture = document.getElementById('fcf-tab-capture');
+    UI.captureBar = document.getElementById('fcf-capture-bar');
+    UI.btnCapture = document.getElementById('fcf-btn-capture');
+    UI.btnCaptureCancel = document.getElementById('fcf-btn-capture-cancel');
+    UI.viewportArea = document.querySelector('.fcf-viewport-area');
     UI.dropzone = document.getElementById('fcf-dropzone');
     UI.fileInput = document.getElementById('fcf-file-input');
 
@@ -152,16 +157,27 @@
     }
 
     UI.tabWebcam.addEventListener('click', () => switchSource('webcam'));
-    UI.tabUpload.addEventListener('click', () => switchSource('upload'));
+    // "Upload Photo" always opens the file picker, also when a photo is already shown.
+    UI.tabUpload.addEventListener('click', async () => {
+      await switchSource('upload');
+      UI.fileInput.click();
+    });
+    UI.tabCapture.addEventListener('click', () => switchSource('capture'));
+    UI.btnCapture.addEventListener('click', captureStill);
+    UI.btnCaptureCancel.addEventListener('click', () => switchSource('upload'));
 
     UI.dropzone.addEventListener('click', () => UI.fileInput.click());
     UI.fileInput.addEventListener('change', handleFileSelect);
-    UI.dropzone.addEventListener('dragover', (e) => { e.preventDefault(); UI.dropzone.classList.add('dragover'); });
-    UI.dropzone.addEventListener('dragleave', () => UI.dropzone.classList.remove('dragover'));
-    UI.dropzone.addEventListener('drop', (e) => {
+    // Drop an image anywhere on the viewer, at any time.
+    UI.viewportArea.addEventListener('dragover', (e) => { e.preventDefault(); UI.viewportArea.classList.add('fcf-drop-hover'); });
+    UI.viewportArea.addEventListener('dragleave', () => UI.viewportArea.classList.remove('fcf-drop-hover'));
+    UI.viewportArea.addEventListener('drop', async (e) => {
       e.preventDefault();
-      UI.dropzone.classList.remove('dragover');
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) processUploadedFile(e.dataTransfer.files[0]);
+      UI.viewportArea.classList.remove('fcf-drop-hover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        await switchSource('upload');
+        processUploadedFile(e.dataTransfer.files[0]);
+      }
     });
 
     UI.modelSelectBaseline.addEventListener('click', () => selectModel('baseline'));
@@ -193,16 +209,19 @@
 
   async function switchSource(sourceType) {
     if (state.activeSource === sourceType) return;
+    stopWebcam();
+    stopCapture();
     state.activeSource = sourceType;
+    UI.tabWebcam.classList.toggle('active', sourceType === 'webcam');
+    UI.tabUpload.classList.toggle('active', sourceType === 'upload');
+    UI.tabCapture.classList.toggle('active', sourceType === 'capture');
     if (sourceType === 'webcam') {
-      UI.tabWebcam.classList.add('active');
-      UI.tabUpload.classList.remove('active');
       UI.dropzone.style.display = 'none';
       await startWebcam();
+    } else if (sourceType === 'capture') {
+      UI.dropzone.style.display = 'none';
+      await startCapture();
     } else {
-      UI.tabUpload.classList.add('active');
-      UI.tabWebcam.classList.remove('active');
-      stopWebcam();
       if (state.currentImageElement) {
         UI.dropzone.style.display = 'none';
         runDetectionOnImage(state.currentImageElement);
@@ -298,8 +317,68 @@
     state.animFrameId = requestAnimationFrame(loop);
   }
 
+  // ------------------------------------------------------------------ Take Photo (camera still)
+
+  async function startCapture() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false
+      });
+      state.webcamStream = stream;
+      UI.videoEl.srcObject = stream;
+      await UI.videoEl.play();
+      UI.stageSingle.style.display = 'flex';   // the preview always uses the single viewer
+      UI.stageCompare.style.display = 'none';
+      UI.captureBar.classList.add('active');
+      UI.metricFaceStatus.textContent = "Camera ready - press Capture Photo";
+      const preview = () => {
+        if (state.activeSource !== 'capture') return;
+        renderCanvas(UI.mainCanvas, UI.videoEl, [], null, null, state.activeModelKey);
+        state.animFrameId = requestAnimationFrame(preview);
+      };
+      preview();
+    } catch (err) {
+      console.error("Camera access error:", err);
+      alert("Unable to access the camera. Check browser permissions, or use Upload Photo instead.");
+      switchSource('upload');
+    }
+  }
+
+  function stopCapture() {
+    if (UI.captureBar) UI.captureBar.classList.remove('active');
+  }
+
+  /** Freeze the current camera frame and analyse it exactly like an uploaded photo. */
+  function captureStill() {
+    const v = UI.videoEl;
+    if (!v.videoWidth) return;
+    const c = document.createElement('canvas');
+    c.width = v.videoWidth;
+    c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    const img = new Image();
+    img.onload = async () => {
+      state.currentImageElement = null;       // don't re-run the previous photo
+      await switchSource('upload');           // stops the camera
+      toggleCompareMode(state.compareMode);
+      showImage(img);
+    };
+    img.src = c.toDataURL('image/jpeg', 0.95);
+  }
+
   function handleFileSelect(e) {
     if (e.target.files && e.target.files[0]) processUploadedFile(e.target.files[0]);
+    e.target.value = '';  // allow choosing the same file again
+  }
+
+  /** Show a new photo (upload or capture) and run both models; it has no ground truth. */
+  function showImage(img) {
+    state.currentImageElement = img;
+    UI.imgEl.src = img.src;
+    UI.dropzone.style.display = 'none';
+    state.currentGroundTruth = null;
+    state.currentSampleKey = null;
+    runDetectionOnImage(img);
   }
 
   function processUploadedFile(file) {
@@ -310,14 +389,7 @@
     const reader = new FileReader();
     reader.onload = function (event) {
       const img = new Image();
-      img.onload = function () {
-        state.currentImageElement = img;
-        UI.imgEl.src = img.src;
-        UI.dropzone.style.display = 'none';
-        state.currentGroundTruth = null;   // an upload has no ground truth until an annotation file is loaded
-        state.currentSampleKey = null;
-        runDetectionOnImage(img);
-      };
+      img.onload = () => showImage(img);   // an upload has no ground truth until an annotation file is loaded
       img.src = event.target.result;
     };
     reader.readAsDataURL(file);
@@ -333,6 +405,7 @@
     if (!imgElement) return;
     const mp = await state.baselineDetector.detect(imgElement);
     const apac = await state.apacDetector.detect(imgElement, { mediapipeLandmarks: mp.faceDetected ? mp.landmarks : null });
+    if (imgElement !== state.currentImageElement) return;  // a newer photo was loaded meanwhile
     state.results = { baseline: mp, apac };
 
     const gt = state.currentGroundTruth && state.currentGroundTruth.landmarks;
@@ -757,11 +830,10 @@
 
   async function loadBenchmarkSample(sampleKey, imagePath, scroll = true) {
     state.currentSampleKey = sampleKey;
-    if (state.activeSource === 'webcam') {
-      stopWebcam();
-      state.activeSource = 'upload';
-      UI.tabUpload.classList.add('active');
-      UI.tabWebcam.classList.remove('active');
+    if (state.activeSource !== 'upload') {
+      state.currentImageElement = null;   // nothing to re-run: the sample loads next
+      await switchSource('upload');
+      toggleCompareMode(state.compareMode);
     }
     const img = new Image();
     img.onload = async function () {

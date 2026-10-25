@@ -1338,3 +1338,20 @@ input:checked + .fcf-slider:before {
 .fcf-bar-apac-std {
   background: repeating-linear-gradient(45deg, #c98500 0 6px, rgba(201, 133, 0, 0.45) 6px 12px);
 }
+
+/* Take Photo: capture controls over the live camera preview */
+.fcf-capture-bar {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  gap: 10px;
+  z-index: 5;
+  background: rgba(0, 23, 56, 0.85);
+  border: 1px solid var(--faceify-border-cyan);
+  border-radius: var(--faceify-radius-full);
+  padding: 8px 12px;
+}
+.fcf-capture-bar.active { display: flex; }
+.fcf-viewport-area.fcf-drop-hover { outline: 2px dashed var(--faceify-cyan); outline-offset: -8px; }

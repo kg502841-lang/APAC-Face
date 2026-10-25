@@ -202,6 +202,13 @@
                 </svg>
                 Use Webcam
               </button>
+              <button class="fcf-tab-btn" id="fcf-tab-capture" title="Take a photo with your camera and analyse it">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                Take Photo
+              </button>
             </div>
 
             <!-- Model Selection Bar -->
@@ -269,6 +276,12 @@
                 </p>
                 <button class="fcf-btn fcf-btn-primary fcf-btn-sm" type="button">Browse Local Files</button>
                 <input type="file" id="fcf-file-input" accept="image/jpeg,image/png,image/jpg" style="display: none;">
+              </div>
+
+              <!-- Camera capture controls (Take Photo mode) -->
+              <div class="fcf-capture-bar" id="fcf-capture-bar">
+                <button class="fcf-btn fcf-btn-primary fcf-btn-sm" type="button" id="fcf-btn-capture">Capture Photo</button>
+                <button class="fcf-btn fcf-btn-outline fcf-btn-sm" type="button" id="fcf-btn-capture-cancel">Cancel</button>
               </div>
 
               <!-- Floating Viewport Controls -->
