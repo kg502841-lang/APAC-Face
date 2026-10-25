@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faceify | Landmark Labelling</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/label.css">
+</head>
+<body>
+<div id="faceify-landmark-app">
+
+  <header class="fcf-nav">
+    <div class="fcf-container fcf-nav-inner">
+      <a href="./index.html" class="fcf-logo">
+        <div class="fcf-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3H5a2 2 0 0 0-2 2v4m0 6v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4m0-6V5a2 2 0 0 0-2-2h-4"></path>
+            <circle cx="9" cy="10" r="1.5" fill="currentColor"></circle>
+            <circle cx="15" cy="10" r="1.5" fill="currentColor"></circle>
+            <path d="M9.5 15a3.5 3.5 0 0 0 5 0"></path>
+          </svg>
+        </div>
+        <div>
+          <span class="fcf-logo-text">Faceify</span>
+          <span class="fcf-logo-pill">Labelling</span>
+        </div>
+      </a>
+      <div class="fcf-nav-cta-wrap">
+        <a href="./index.html" class="fcf-btn fcf-btn-secondary fcf-btn-sm">Back to the app</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="fcf-container lbl-page">
+
+    <section class="lbl-intro">
+      <div class="fcf-badge">Ground truth for APAC faces</div>
+      <h1 class="fcf-title-md">Landmark <span class="fcf-cyan-text">labelling</span></h1>
+      <p class="fcf-subtitle lbl-lead">
+        Place 68 points on each face by hand. Every face starts from the same average face shape, never from a
+        model's prediction, so the labels can fairly test every model, ours included.
+      </p>
+    </section>
+
+    <!-- Setup -->
+    <section class="lbl-setup" id="lbl-setup">
+      <div class="lbl-field">
+        <label for="lbl-annotator">Your name (letters, digits, - or _)</label>
+        <input id="lbl-annotator" type="text" maxlength="40" autocomplete="off" placeholder="e.g. mrunal">
+      </div>
+      <div class="lbl-field">
+        <label for="lbl-queue">Faces to label</label>
+        <select id="lbl-queue">
+          <option value="priority">APAC groups + White reference (priority)</option>
+          <option value="all">All groups</option>
+          <option value="second">Second opinion: faces someone else labelled</option>
+          <option value="mine">Review my saved faces</option>
+        </select>
+      </div>
+      <button class="fcf-btn fcf-btn-primary" id="lbl-start">Start labelling</button>
+      <div class="lbl-server-note" id="lbl-server-note" hidden></div>
+    </section>
+
+    <section class="lbl-progress" id="lbl-progress" aria-label="Progress per group"></section>
+
+    <!-- Workspace -->
+    <section class="lbl-workspace" id="lbl-workspace" hidden>
+      <div class="lbl-stage-wrap">
+        <div class="lbl-stage-bar">
+          <div class="lbl-face-meta">
+            <span class="lbl-face-group" id="lbl-face-group">—</span>
+            <span class="lbl-face-count" id="lbl-face-count">—</span>
+          </div>
+          <div class="lbl-tools">
+            <button class="lbl-tool" id="lbl-zoom-out" title="Zoom out (-)">−</button>
+            <button class="lbl-tool" id="lbl-zoom-fit" title="Fit (F)">Fit</button>
+            <button class="lbl-tool" id="lbl-zoom-in" title="Zoom in (+)">+</button>
+            <button class="lbl-tool" id="lbl-pan" title="Pan mode for touch screens (hold Space with a mouse)">Pan</button>
+            <label class="lbl-check"><input type="checkbox" id="lbl-lines" checked> Lines</label>
+            <label class="lbl-check"><input type="checkbox" id="lbl-numbers"> Numbers</label>
+          </div>
+        </div>
+        <div class="lbl-stage" id="lbl-stage">
+          <canvas id="lbl-canvas"></canvas>
+          <canvas id="lbl-loupe" class="lbl-loupe" width="180" height="180"></canvas>
+        </div>
+        <p class="lbl-hint">
+          <strong>Click</strong> to put the highlighted point there (then the next point is highlighted).
+          <strong>Drag</strong> any point to move it. <strong>Scroll</strong> to zoom, <strong>Space + drag</strong> or right-drag to pan.
+        </p>
+      </div>
+
+      <aside class="lbl-panel">
+        <div class="lbl-card">
+          <div class="fcf-metric-label">Current point</div>
+          <div class="lbl-point-title"><span id="lbl-point-num">1</span> <span class="lbl-point-of">of 68</span></div>
+          <div class="lbl-point-region" id="lbl-point-region">Jawline</div>
+          <p class="lbl-point-desc" id="lbl-point-desc">—</p>
+          <svg class="lbl-ref" id="lbl-ref" viewBox="-0.55 -0.5 1.1 1.05" aria-label="Where the current point is on a face"></svg>
+          <div class="lbl-ref-sides"><span>image left</span><span>image right</span></div>
+          <div class="lbl-row">
+            <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="lbl-prev-pt" title="Previous point (P or Shift+Tab)">← Point</button>
+            <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="lbl-next-pt" title="Next point (N or Tab)">Point →</button>
+          </div>
+          <label class="lbl-check lbl-occ"><input type="checkbox" id="lbl-occluded"> This point is hidden (O) — place your best estimate</label>
+        </div>
+
+        <div class="lbl-card">
+          <div class="lbl-stats">
+            <div><span class="fcf-metric-label">Moved</span><strong id="lbl-moved">0 / 68</strong></div>
+            <div><span class="fcf-metric-label">Time</span><strong id="lbl-timer">0:00</strong></div>
+          </div>
+          <div class="lbl-row">
+            <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="lbl-undo" title="Undo (Ctrl+Z)">Undo</button>
+            <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="lbl-reset" title="Back to the starting shape">Reset</button>
+          </div>
+          <button class="fcf-btn fcf-btn-primary lbl-save" id="lbl-save" title="Save and next face (Enter)">Save &amp; next face</button>
+          <div class="lbl-row">
+            <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="lbl-prev-face">← Face</button>
+            <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="lbl-next-face">Face →</button>
+          </div>
+          <div class="lbl-skip">
+            <select id="lbl-skip-reason" aria-label="Reason for skipping">
+              <option value="no_face">No face / wrong crop</option>
+              <option value="multiple_faces">Several faces</option>
+              <option value="too_occluded">Face mostly hidden</option>
+              <option value="too_blurry">Too blurry to label</option>
+              <option value="not_a_photo">Not a photo</option>
+              <option value="other">Other</option>
+            </select>
+            <button class="fcf-btn fcf-btn-secondary fcf-btn-sm" id="lbl-skip">Skip face</button>
+          </div>
+          <div class="lbl-status" id="lbl-status" role="status"></div>
+        </div>
+
+        <details class="lbl-card lbl-keys">
+          <summary>Keyboard shortcuts</summary>
+          <dl>
+            <dt>Enter</dt><dd>save &amp; next face</dd>
+            <dt>N / Tab</dt><dd>next point</dd>
+            <dt>P / Shift+Tab</dt><dd>previous point</dd>
+            <dt>Arrows</dt><dd>nudge point 0.5 px (Shift: 2 px)</dd>
+            <dt>O</dt><dd>mark point hidden</dd>
+            <dt>Ctrl+Z</dt><dd>undo</dd>
+            <dt>+ / − / F</dt><dd>zoom in / out / fit</dd>
+          </dl>
+        </details>
+
+        <button class="fcf-btn fcf-btn-secondary fcf-btn-sm lbl-export" id="lbl-export">Download my labels (JSON)</button>
+      </aside>
+    </section>
+
+    <section class="lbl-guide">
+      <h2 class="fcf-title-sm">How to place the points</h2>
+      <ul>
+        <li><strong>Sides are the image's left and right</strong>, as you see it on screen.</li>
+        <li><strong>Jaw (1–17):</strong> along the visible edge of the face, from about eye level next to the ear down
+          to the chin (point 9 is the chin tip) and up the other side. Spread the points evenly.</li>
+        <li><strong>Eyebrows (18–27):</strong> along the upper edge of each brow, outer to inner on the left, inner to outer on the right.</li>
+        <li><strong>Nose (28–36):</strong> 28–31 down the bridge to the tip; 32–36 along the bottom of the nostrils, left to right, 34 under the tip.</li>
+        <li><strong>Eyes (37–48):</strong> exact eye corners first, then the lid edges where lid meets eyeball.</li>
+        <li><strong>Mouth (49–68):</strong> 49 and 55 are the outer mouth corners; 49–60 follow the outer lip edge, 61–68 the inner edge where the lips meet.</li>
+        <li><strong>Hidden points:</strong> place your best estimate and tick "hidden". Skip a face only if you cannot label it at all.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+<script src="./js/label-app.js"></script>
+</body>
+</html>

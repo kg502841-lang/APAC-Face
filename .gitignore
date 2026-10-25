@@ -30,6 +30,9 @@ web/benchmark/
 web/data/wflw_benchmark.json
 web/data/apac_gallery.json
 
+# Labelling tool: APAC images to annotate (python -m src.apac_labels prepare). Labels live in data/apac_labels/
+web/labeling/
+
 # Editors / OS / local tooling
 .claude/
 .vscode/

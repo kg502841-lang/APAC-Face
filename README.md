@@ -374,6 +374,8 @@ APAC-Face/
 │   ├── metrics.py           NME, MAE, FR, AUC/CED, bootstrap tests
 │   ├── evaluate.py          WFLW test evaluation, tables and figures
 │   ├── apac_eval.py         per-group consistency (and accuracy, given annotations)
+│   ├── apac_labels.py       hand-labelled APAC test set: prepare faces, progress, per-group accuracy
+│   ├── serve_web.py         web server: cross-origin isolation + label storage for the labelling tool
 │   ├── inference.py         face detection, crop, predict, refine; CLI
 │   ├── live.py              webcam / video mode: face tracking + One Euro smoothing
 │   ├── video_eval.py        video benchmark: jitter, lag and lost tracks vs MediaPipe
@@ -383,7 +385,7 @@ APAC-Face/
 │   └── utils.py             config, seeding, device, JSON helpers
 ├── backend/main.py          FastAPI service
 ├── frontend/                Streamlit dashboard (app.py + views/)
-├── web/                     Faceify web app: index.html, js/, styles/, models/ (ONNX + MediaPipe), data/
+├── web/                     Faceify web app: index.html, label.html (labelling tool), js/, styles/, models/, data/
 ├── checkpoints/             trained inference weights + detector calibration
 ├── results/                 metrics, CSV tables, figures, training logs
 ├── scripts/                 train_all.ps1, run_app.ps1
@@ -470,6 +472,39 @@ python -m src.apac_eval --source "path/to/APAC asian images.zip" --per-group 300
 python -m src.video_eval --split val --faces 40 --tune  # choose the live filter (validation only)
 python -m src.video_eval --split test --faces 60        # video jitter / lag / lost-track benchmark
 ```
+
+### Hand-labelled APAC test set (labelling tool)
+
+The APAC archive has group labels but no landmarks, so per-population **accuracy** needs human labels. The
+labelling tool collects them:
+
+```bash
+python -m src.apac_labels prepare --per-group 50   # 50 faces per group -> web/labeling/ (git-ignored)
+python -m src.serve_web                            # open http://127.0.0.1:8080/label.html
+python -m src.apac_labels status                   # progress per group and annotator
+python -m src.apac_labels evaluate                 # accuracy per group vs the human labels
+```
+
+- **68 points per face** (iBUG layout: the 68 points every comparison here is scored on).
+- **Neutral starting shape.** Each face starts from the mean WFLW training face, placed in a box around the face
+  (the box comes from MediaPipe's face location, or the image centre if it finds no face). No model's landmark
+  prediction is ever shown, so the labels do not lean towards APAC-Face or MediaPipe.
+- **Tool:** click to place the highlighted point (the next one is then highlighted), drag to correct, zoom and
+  pan, a 4x magnifier while dragging, a reference diagram and written instructions for every point, "hidden
+  point" flags, undo, skip with a reason, and a timer. The default queue interleaves East Asian, Southeast Asian,
+  South Asian and the White reference group so all four fill up together.
+- **Storage:** `src/serve_web.py` saves each face to `data/apac_labels/<annotator>/<id>.json` (git-ignored, like
+  all dataset files). If the page is served without it, labels stay in the browser and can be downloaded.
+- **Second opinions:** the "Second opinion" queue shows faces another annotator labelled. `evaluate` reports
+  the inter-annotator disagreement. Differences between models smaller than that are within labelling noise.
+- **Evaluation** scores MediaPipe (raw and offset-corrected) and every checkpoint against the labels on the faces
+  MediaPipe finds, with APAC-Face located by MediaPipe's face detection as in the web app. It reports NME,
+  inner-face NME, failure rates and regions per group, the **gap of each group to the White reference**, and
+  paired bootstrap tests of the deployed model against MediaPipe and the baseline
+  (`results/apac_labelled_accuracy.json`, `results/apac_labelled_per_face.csv`).
+- About 3–5 minutes per face. With 50 faces per group, a group's mean NME is known to roughly ±1 point (95%,
+  judging by the per-face spread on WFLW); paired model-vs-model differences on the same faces are tighter.
+  More faces per group narrow both.
 
 ### Evaluating on an annotated APAC set
 
