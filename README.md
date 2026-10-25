@@ -16,7 +16,8 @@ a robustness analysis, a REST inference API and an interactive dashboard.
 | Is it more accurate than Google MediaPipe? | Same WFLW test faces, 68 common points | **Accuracy** vs MediaPipe Face Landmarker, also after correcting MediaPipe's labelling-style offset |
 | Does it hold up under hard imaging conditions? | WFLW pose / expression / illumination / make-up / occlusion / blur subsets | **Accuracy** per condition. These are *imaging conditions, not demographic groups* |
 | Does it behave consistently across East, Southeast and South Asian faces? | FairFace-style APAC images, group labels from the dataset's file names | **Label-free consistency** (flip consistency, crop stability). *Not accuracy*: these images have no landmark ground truth |
-| True per-population accuracy | An annotated APAC test set | Supported by `src/apac_eval.py --annotations`. Needs annotated data, which this repository does not have yet |
+| Is it accurate on Asian faces, and how does that compare with Caucasian faces? | SCUT-FBP5500: 4,000 Asian and 1,500 Caucasian faces with **manual landmarks** | **Accuracy** per group on 30 common points, vs MediaPipe, with bootstrap CIs |
+| Accuracy on South and Southeast Asian faces | Hand-labelled APAC faces (labelling tool in this repo) | **Accuracy** per group once labelled; no public landmark dataset covers these groups |
 
 Ethnicity is never inferred from facial appearance. WFLW has no demographic labels, so WFLW results alone
 do not prove APAC fairness.
@@ -282,6 +283,58 @@ How to read this, without over-claiming:
 
 ![APAC group analysis](results/apac_group_analysis.png)
 <!-- APAC:END -->
+
+### East Asian vs Caucasian accuracy: SCUT-FBP5500 (manual landmarks)
+
+`python -m src.scut_eval` scores every method against **hand-placed** landmarks on
+[SCUT-FBP5500](https://github.com/HCIILAB/SCUT-FBP5500-Database-Release): 5,500 frontal faces, 2,000 Asian
+women, 2,000 Asian men, 750 Caucasian women, 750 Caucasian men (group labels from the dataset). None of the
+models saw these images. One annotation file is empty, which leaves 5,499 faces, and MediaPipe found all of them.
+
+**Point mapping.** SCUT has its own 86-point layout. Only the **30 points with the same anatomical definition**
+in both layouts are scored, with nothing interpolated:
+- 10 eyebrow points (upper edge)
+- 12 eye points (corners, plus the lid points next to each corner)
+- the point under the nose tip
+- the 7 upper outer lip points
+
+Left out: the jaw (SCUT's outline starts at eyebrow height and continues over the forehead), the nose bridge
+and nostrils (SCUT traces the sides of the nose), the lower lip (6 vs 5 points) and the inner lip (absent).
+Every ordering the map relies on holds on more than 99.6% of faces. NME uses the labelled outer eye corners.
+
+| Group (faces) | MediaPipe | MediaPipe corrected | Baseline | Detector-robust | **Heatmap (deployed)** |
+|---|---|---|---|---|---|
+| Asian (4,000) | 3.71% | 2.64% | 3.19% | 3.22% | **2.51%** |
+| Caucasian (1,499) | 4.15% | **3.40%** | 3.68% | 3.59% | 3.41% |
+| Asian women / men | 3.66 / 3.76% | 2.57 / 2.70% | 3.25 / 3.12% | 3.32 / 3.11% | **2.47 / 2.56%** |
+| Caucasian women / men | 4.02 / 4.28% | 3.20 / **3.59%** | 3.60 / 3.76% | 3.51 / 3.67% | **3.17** / 3.64% |
+| Gap, Asian − Caucasian (95% CI) | −0.44 [−0.54, −0.37] | −0.76 [−0.87, −0.69] | −0.49 [−0.59, −0.42] | −0.37 [−0.48, −0.30] | −0.89 [−1.00, −0.82] |
+
+- **On Asian faces the deployed model is the most accurate method:**
+  - 32% lower NME than MediaPipe (2.51% vs 3.71%; 95% CI of the drop 1.18–1.21 points).
+  - 21% lower than the baseline (CI 0.66–0.69 points).
+  - 4.7% lower than offset-corrected MediaPipe (CI 0.11–0.13 points).
+  - Best on every region: eyebrows 3.76%, eyes 1.58%, nose and upper lip 2.35%.
+- **On Caucasian faces** it beats MediaPipe as shipped (−0.74 points) and the baseline (−0.28 points). It is
+  **tied with offset-corrected MediaPipe** (3.41% vs 3.40%, p = 0.30).
+- **This dataset does not show the premise of the problem statement.** Every method, MediaPipe included, is
+  *more* accurate on SCUT's Asian faces than on its Caucasian faces (negative gaps).
+  - **Confounded groups:** per the dataset's README, most images come from the internet, some Asian faces
+    from two Chinese photo collections and some Caucasian faces from the 10k US Adult Faces database. So
+    photo source and quality may differ between the groups along with ethnicity.
+  - **What the gap can't show:** it cannot isolate an ethnicity effect.
+  - **What it can show:** how methods compare *within* each group, and how the gap differs between methods on
+    the same faces. Our gain is larger on Asian faces than on Caucasian ones (vs MediaPipe: +0.45 points more,
+    CI 0.42–0.48).
+- **Limits.**
+  - **Easy photos:** the faces are frontal, unoccluded and neutral, hence the low errors overall. This is not
+    a test of hard conditions.
+  - **East Asian only:** SCUT's Asian faces are essentially all East Asian; South and Southeast Asian faces
+    need the labelling tool.
+  - **Labelling convention:** our model learned WFLW's conventions, which may sit closer to SCUT's than
+    MediaPipe's do. The offset-corrected column reduces that effect.
+
+![SCUT-FBP5500 benchmark](results/scut_benchmark.png)
 <!-- RESULTS:END -->
 
 ## System architecture
@@ -375,6 +428,7 @@ APAC-Face/
 │   ├── evaluate.py          WFLW test evaluation, tables and figures
 │   ├── apac_eval.py         per-group consistency (and accuracy, given annotations)
 │   ├── apac_labels.py       hand-labelled APAC test set: prepare faces, progress, per-group accuracy
+│   ├── scut_eval.py         Asian vs Caucasian accuracy on SCUT-FBP5500 (manual landmarks)
 │   ├── serve_web.py         web server: cross-origin isolation + label storage for the labelling tool
 │   ├── inference.py         face detection, crop, predict, refine; CLI
 │   ├── live.py              webcam / video mode: face tracking + One Euro smoothing
@@ -433,6 +487,10 @@ pip install absl-py flatbuffers onnx onnxruntime onnxscript
    python -m src.dataset
    ```
 
+Optional, for the Asian vs Caucasian test: download SCUT-FBP5500 (172 MB, non-commercial research use only)
+from the Google Drive link in its [GitHub repository](https://github.com/HCIILAB/SCUT-FBP5500-Database-Release)
+and extract it to `data/SCUT-FBP5500/` (so `data/SCUT-FBP5500/SCUT-FBP5500_v2/Images/` exists).
+
 If the files are missing, every command prints the expected layout instead of crashing. See
 [data/README.md](data/README.md).
 
@@ -469,6 +527,7 @@ python -m src.inference --calibrate-detector     # fit the face-detector -> crop
 python -m src.evaluate                           # WFLW test: metrics.json, CSVs, figures
 python -m src.mediapipe_baseline                 # Google MediaPipe vs APAC-Face on the same faces
 python -m src.apac_eval --source "path/to/APAC asian images.zip" --per-group 300
+python -m src.scut_eval                          # Asian vs Caucasian accuracy, SCUT-FBP5500 manual landmarks
 python -m src.video_eval --split val --faces 40 --tune  # choose the live filter (validation only)
 python -m src.video_eval --split test --faces 60        # video jitter / lag / lost-track benchmark
 ```
@@ -695,6 +754,8 @@ under augmentation, the metrics, the model and checkpoints, inference, the API, 
 - The APAC image archive follows the FairFace layout (86,744 training crops, seven race categories):
   K. Kärkkäinen, J. Joo. *FairFace: Face Attribute Dataset for Balanced Race, Gender, and Age.* WACV 2021.
   Not redistributed here.
+- SCUT-FBP5500: L. Liang, L. Lin, L. Jin, D. Xie, M. Li. *SCUT-FBP5500: A Diverse Benchmark Dataset for
+  Multi-Paradigm Facial Beauty Prediction.* ICPR 2018. Non-commercial research use only; not redistributed here.
 - MobileNetV2 ImageNet weights from torchvision.
 - Google MediaPipe Face Landmarker (`web/models/face_landmarker.task`) and `@mediapipe/tasks-vision`: Apache-2.0.
   ONNX Runtime Web: MIT.
