@@ -4,33 +4,40 @@ East_Asian,East Asian,True,300,0.813,augmented,4.389,3.613,5.256,2.133,1.918,2.3
 East_Asian,East Asian,True,300,0.813,proposed,4.386,3.724,5.117,2.150,1.894,2.443
 East_Asian,East Asian,True,300,0.813,robust,5.331,4.188,6.698,2.101,1.812,2.438
 East_Asian,East Asian,True,300,0.813,heatmap,3.923,3.056,5.002,1.693,1.406,2.017
+East_Asian,East Asian,True,300,0.813,pseudo,3.141,2.465,3.963,1.548,1.242,1.898
 Indian,South Asian (Indian),True,300,0.887,baseline,5.279,4.805,5.795,4.103,3.911,4.302
 Indian,South Asian (Indian),True,300,0.887,augmented,3.308,2.699,4.091,1.884,1.722,2.068
 Indian,South Asian (Indian),True,300,0.887,proposed,3.499,3.050,4.018,1.799,1.616,2.023
 Indian,South Asian (Indian),True,300,0.887,robust,3.565,2.837,4.464,1.656,1.499,1.840
 Indian,South Asian (Indian),True,300,0.887,heatmap,2.933,2.312,3.651,1.388,1.146,1.697
+Indian,South Asian (Indian),True,300,0.887,pseudo,2.364,1.818,3.088,1.079,0.913,1.270
 Southeast_Asian,Southeast Asian,True,300,0.820,baseline,5.889,5.316,6.494,4.255,4.050,4.449
 Southeast_Asian,Southeast Asian,True,300,0.820,augmented,4.288,3.566,5.134,2.120,1.911,2.340
 Southeast_Asian,Southeast Asian,True,300,0.820,proposed,4.111,3.468,4.854,1.969,1.766,2.170
 Southeast_Asian,Southeast Asian,True,300,0.820,robust,6.078,4.476,8.031,2.174,1.863,2.539
 Southeast_Asian,Southeast Asian,True,300,0.820,heatmap,3.920,2.965,4.995,1.714,1.418,2.036
+Southeast_Asian,Southeast Asian,True,300,0.820,pseudo,3.023,2.345,3.748,1.400,1.115,1.705
 Black,Black,False,300,0.753,baseline,6.651,6.116,7.197,4.572,4.355,4.785
 Black,Black,False,300,0.753,augmented,4.383,3.710,5.102,2.303,2.080,2.541
 Black,Black,False,300,0.753,proposed,4.638,3.845,5.526,2.109,1.898,2.345
 Black,Black,False,300,0.753,robust,4.958,3.869,6.219,2.031,1.785,2.321
 Black,Black,False,300,0.753,heatmap,3.773,3.050,4.584,1.866,1.523,2.258
+Black,Black,False,300,0.753,pseudo,3.731,2.725,4.814,1.533,1.221,1.873
 Latino_Hispanic,Latino / Hispanic,False,300,0.853,baseline,5.797,5.240,6.356,4.138,3.883,4.393
 Latino_Hispanic,Latino / Hispanic,False,300,0.853,augmented,4.106,3.336,5.055,2.016,1.816,2.234
 Latino_Hispanic,Latino / Hispanic,False,300,0.853,proposed,4.130,3.462,4.902,1.909,1.702,2.134
 Latino_Hispanic,Latino / Hispanic,False,300,0.853,robust,4.244,3.319,5.261,1.940,1.648,2.266
 Latino_Hispanic,Latino / Hispanic,False,300,0.853,heatmap,3.087,2.475,3.723,1.403,1.162,1.663
+Latino_Hispanic,Latino / Hispanic,False,300,0.853,pseudo,2.902,2.240,3.737,1.377,1.107,1.676
 Middle_Eastern,Middle Eastern,False,300,0.800,baseline,6.635,6.011,7.261,4.734,4.455,5.025
 Middle_Eastern,Middle Eastern,False,300,0.800,augmented,5.824,4.566,7.346,2.685,2.358,3.059
 Middle_Eastern,Middle Eastern,False,300,0.800,proposed,5.125,4.341,6.024,2.535,2.213,2.909
 Middle_Eastern,Middle Eastern,False,300,0.800,robust,6.270,4.705,8.067,2.395,2.041,2.814
 Middle_Eastern,Middle Eastern,False,300,0.800,heatmap,4.814,3.556,6.383,2.121,1.726,2.580
+Middle_Eastern,Middle Eastern,False,300,0.800,pseudo,3.897,3.122,4.801,1.819,1.466,2.206
 White,White,False,300,0.767,baseline,6.557,5.958,7.211,4.537,4.273,4.816
 White,White,False,300,0.767,augmented,4.350,3.766,5.065,2.233,2.049,2.444
 White,White,False,300,0.767,proposed,4.322,3.706,5.099,2.081,1.893,2.284
 White,White,False,300,0.767,robust,4.649,3.747,5.816,1.982,1.790,2.198
 White,White,False,300,0.767,heatmap,4.165,3.300,5.314,1.928,1.570,2.375
+White,White,False,300,0.767,pseudo,3.707,2.824,4.791,1.414,1.193,1.683

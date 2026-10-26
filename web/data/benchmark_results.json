@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-26 02:32:02",
+  "generated": "2026-10-27 04:58:04",
   "mediapipe": {
     "protocol": {
       "dataset": "WFLW test (2,500 faces, manual annotations)",
@@ -396,6 +396,70 @@
           "nme": 0.0515445911430898,
           "failure_rate": 0.1312,
           "auc": 0.5053785785785786
+        }
+      },
+      "pseudo": {
+        "label": "Heatmap + APAC pseudo-labels",
+        "detected_faces": {
+          "faces": 2267,
+          "nme": 0.04259645301628103,
+          "nme_median": 0.037297686727942855,
+          "nme_inner": 0.03534628054032017,
+          "mean_error_px": 3.184285879135132,
+          "failure_rate": 0.025143361270401413,
+          "auc": 0.5812941304780741,
+          "point_failure_rate": 0.12281714626741742,
+          "median_point_error_px": 1.951514482498169,
+          "points_within": {
+            "0.05": 0.7283920184747917,
+            "0.08": 0.8771828537325825,
+            "0.10": 0.9214237525623394
+          },
+          "regions": {
+            "Jawline": 0.06434696167707443,
+            "Eyebrows": 0.04112232103943825,
+            "Nose": 0.03122388944029808,
+            "Eyes": 0.028228960931301117,
+            "Mouth": 0.038583725690841675
+          }
+        },
+        "all_faces": {
+          "faces": 2500,
+          "nme": 0.04776773127621994,
+          "failure_rate": 0.0556,
+          "auc": 0.544320920920921
+        }
+      },
+      "pseudo_mp_located": {
+        "label": "Heatmap + APAC pseudo-labels (MediaPipe-located)",
+        "detected_faces": {
+          "faces": 2267,
+          "nme": 0.04988164993938507,
+          "nme_median": 0.03755634720025873,
+          "nme_inner": 0.0417106425122364,
+          "mean_error_px": 3.6114320755004883,
+          "failure_rate": 0.036612262902514334,
+          "auc": 0.572027695980056,
+          "point_failure_rate": 0.13229455875866006,
+          "median_point_error_px": 1.972005844116211,
+          "points_within": {
+            "0.05": 0.7230662445834091,
+            "0.08": 0.86770544124134,
+            "0.10": 0.9116803757232933
+          },
+          "regions": {
+            "Jawline": 0.07439467310905457,
+            "Eyebrows": 0.048354022204875946,
+            "Nose": 0.037066902965307236,
+            "Eyes": 0.035197678953409195,
+            "Mouth": 0.04438641294836998
+          }
+        },
+        "all_faces": {
+          "faces": 2500,
+          "nme": 0.04988164993938507,
+          "failure_rate": 0.1264,
+          "auc": 0.5187147147147148
         }
       }
     },
@@ -855,6 +919,82 @@
           "nme_inner": 0.05187983574056348,
           "failure_rate": 0.06060606060606061
         }
+      },
+      "pseudo": {
+        "pose": {
+          "faces": 228,
+          "nme": 0.07051746647722201,
+          "nme_inner": 0.06041064859842962,
+          "failure_rate": 0.11842105263157894
+        },
+        "expression": {
+          "faces": 291,
+          "nme": 0.04630869694010171,
+          "nme_inner": 0.038435342923665836,
+          "failure_rate": 0.020618556701030927
+        },
+        "illumination": {
+          "faces": 625,
+          "nme": 0.0409564555419376,
+          "nme_inner": 0.03416211138737429,
+          "failure_rate": 0.016
+        },
+        "makeup": {
+          "faces": 176,
+          "nme": 0.040673880594725556,
+          "nme_inner": 0.0338352248700303,
+          "failure_rate": 0.011363636363636364
+        },
+        "occlusion": {
+          "faces": 613,
+          "nme": 0.0504581329369833,
+          "nme_inner": 0.0421070826830011,
+          "failure_rate": 0.057096247960848286
+        },
+        "blur": {
+          "faces": 660,
+          "nme": 0.04868922984226803,
+          "nme_inner": 0.04123643758697002,
+          "failure_rate": 0.030303030303030304
+        }
+      },
+      "pseudo_mp_located": {
+        "pose": {
+          "faces": 228,
+          "nme": 0.08485738622444734,
+          "nme_inner": 0.07267816368865489,
+          "failure_rate": 0.14473684210526316
+        },
+        "expression": {
+          "faces": 291,
+          "nme": 0.05936726087458766,
+          "nme_inner": 0.04989699894650298,
+          "failure_rate": 0.041237113402061855
+        },
+        "illumination": {
+          "faces": 625,
+          "nme": 0.046391835780828596,
+          "nme_inner": 0.03870241722486339,
+          "failure_rate": 0.0224
+        },
+        "makeup": {
+          "faces": 176,
+          "nme": 0.04197570904770379,
+          "nme_inner": 0.0344953819545615,
+          "failure_rate": 0.03409090909090909
+        },
+        "occlusion": {
+          "faces": 613,
+          "nme": 0.07018120128478313,
+          "nme_inner": 0.06024357273131953,
+          "failure_rate": 0.08156606851549755
+        },
+        "blur": {
+          "faces": 660,
+          "nme": 0.05889866071223714,
+          "nme_inner": 0.05003058672844637,
+          "failure_rate": 0.05303030303030303
+        }
       }
     },
     "comparison": {
@@ -1218,6 +1358,78 @@
           "n": 2267
         }
       },
+      "pseudo_vs_mediapipe": {
+        "nme_reduction_pct": 49.53054232627597,
+        "inner_nme_reduction_pct": 45.146289513435654,
+        "bootstrap_nme_diff": {
+          "mean_diff": 0.04180400417043859,
+          "ci_low": 0.03836574741606941,
+          "ci_high": 0.0454025257874257,
+          "p_value": 0.0,
+          "n": 2267
+        },
+        "bootstrap_inner_nme_diff": {
+          "mean_diff": 0.029091075158667146,
+          "ci_low": 0.025750754528117415,
+          "ci_high": 0.03274253939125008,
+          "p_value": 0.0,
+          "n": 2267
+        }
+      },
+      "pseudo_vs_mediapipe_calibrated": {
+        "nme_reduction_pct": 41.44975327423192,
+        "inner_nme_reduction_pct": 35.28963866125772,
+        "bootstrap_nme_diff": {
+          "mean_diff": 0.030155508586528483,
+          "ci_low": 0.026670521135365804,
+          "ci_high": 0.03384596807322099,
+          "p_value": 0.0,
+          "n": 2267
+        },
+        "bootstrap_inner_nme_diff": {
+          "mean_diff": 0.019276008393118757,
+          "ci_low": 0.01593967345745672,
+          "ci_high": 0.022884699088156223,
+          "p_value": 0.0,
+          "n": 2267
+        }
+      },
+      "pseudo_mp_located_vs_mediapipe": {
+        "nme_reduction_pct": 40.89883917449451,
+        "inner_nme_reduction_pct": 35.269468990807894,
+        "bootstrap_nme_diff": {
+          "mean_diff": 0.034518807247334554,
+          "ci_low": 0.03339430895996695,
+          "ci_high": 0.035621399946741523,
+          "p_value": 0.0,
+          "n": 2267
+        },
+        "bootstrap_inner_nme_diff": {
+          "mean_diff": 0.02272671318675093,
+          "ci_low": 0.021910436594887256,
+          "ci_high": 0.02353798490563003,
+          "p_value": 0.0,
+          "n": 2267
+        }
+      },
+      "pseudo_mp_located_vs_mediapipe_calibrated": {
+        "nme_reduction_pct": 31.43600689186262,
+        "inner_nme_reduction_pct": 23.638054488958304,
+        "bootstrap_nme_diff": {
+          "mean_diff": 0.022870311663424445,
+          "ci_low": 0.021662975973110614,
+          "ci_high": 0.024022551506974958,
+          "p_value": 0.0,
+          "n": 2267
+        },
+        "bootstrap_inner_nme_diff": {
+          "mean_diff": 0.012911646421202534,
+          "ci_low": 0.01206569095867923,
+          "ci_high": 0.013770548313353441,
+          "p_value": 0.0,
+          "n": 2267
+        }
+      },
       "robust_mp_located_vs_proposed_mp_located": {
         "nme_reduction_pct": 1.4134549391114533,
         "bootstrap_nme_diff": {
@@ -1267,10 +1479,10 @@
           "batch_size": 1,
           "input": "224x224",
           "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU (6.0 GB VRAM)",
-          "gpu_ms_median": 7.006099971476942,
-          "gpu_ms_p95": 7.665310025913641,
-          "cpu_ms_median": 13.95744999172166,
-          "cpu_ms_p95": 16.06147000566125,
+          "gpu_ms_median": 12.71724997786805,
+          "gpu_ms_p95": 17.243075056467205,
+          "cpu_ms_median": 22.75675005512312,
+          "cpu_ms_p95": 24.706945050274957,
           "cpu_threads": 8
         },
         "subsets": {
@@ -1352,10 +1564,10 @@
           "batch_size": 1,
           "input": "224x224",
           "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU (6.0 GB VRAM)",
-          "gpu_ms_median": 7.174899976234883,
-          "gpu_ms_p95": 10.009875055402516,
-          "cpu_ms_median": 13.901999976951629,
-          "cpu_ms_p95": 16.330850077793006,
+          "gpu_ms_median": 12.014499981887639,
+          "gpu_ms_p95": 14.76818008814007,
+          "cpu_ms_median": 21.92835003370419,
+          "cpu_ms_p95": 24.783339991699904,
           "cpu_threads": 8
         },
         "subsets": {
@@ -1437,10 +1649,10 @@
           "batch_size": 1,
           "input": "224x224",
           "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU (6.0 GB VRAM)",
-          "gpu_ms_median": 7.693599967751652,
-          "gpu_ms_p95": 11.16254996159114,
-          "cpu_ms_median": 15.016549965366721,
-          "cpu_ms_p95": 18.916640011593703,
+          "gpu_ms_median": 11.958150018472224,
+          "gpu_ms_p95": 13.655949977692217,
+          "cpu_ms_median": 21.88285003649071,
+          "cpu_ms_p95": 24.27862505428493,
           "cpu_threads": 8
         },
         "subsets": {
@@ -1522,10 +1734,10 @@
           "batch_size": 1,
           "input": "224x224",
           "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU (6.0 GB VRAM)",
-          "gpu_ms_median": 11.79199997568503,
-          "gpu_ms_p95": 12.953539984300729,
-          "cpu_ms_median": 20.20350005477667,
-          "cpu_ms_p95": 21.32356502697803,
+          "gpu_ms_median": 11.773700010962784,
+          "gpu_ms_p95": 13.263959944015367,
+          "cpu_ms_median": 21.375600015744567,
+          "cpu_ms_p95": 23.92145997728221,
           "cpu_threads": 8
         },
         "subsets": {
@@ -1607,10 +1819,10 @@
           "batch_size": 1,
           "input": "224x224",
           "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU (6.0 GB VRAM)",
-          "gpu_ms_median": 14.532750006765127,
-          "gpu_ms_p95": 15.896434959722681,
-          "cpu_ms_median": 28.381199983414263,
-          "cpu_ms_p95": 29.952229926129803,
+          "gpu_ms_median": 14.225599996279925,
+          "gpu_ms_p95": 15.839089977089316,
+          "cpu_ms_median": 29.415349999908358,
+          "cpu_ms_p95": 31.40814004582353,
           "cpu_threads": 8
         },
         "subsets": {
@@ -1675,6 +1887,91 @@
             "mae_px": 2.0125609723870803
           }
         }
+      },
+      "pseudo": {
+        "label": "Heatmap + APAC pseudo-labels",
+        "overall": {
+          "n": 2500,
+          "n_invalid": 0,
+          "nme": 0.04989370837765952,
+          "nme_median": 0.04111863624117553,
+          "nme_std": 0.031752076286374775,
+          "failure_rate": 0.0616,
+          "auc": 0.5253505505505506,
+          "mae_px": 2.2409442423571053
+        },
+        "latency": {
+          "batch_size": 1,
+          "input": "224x224",
+          "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU (6.0 GB VRAM)",
+          "gpu_ms_median": 14.38404998043552,
+          "gpu_ms_p95": 16.81691002449952,
+          "cpu_ms_median": 28.889750072266906,
+          "cpu_ms_p95": 32.12929503060877,
+          "cpu_threads": 8
+        },
+        "subsets": {
+          "pose": {
+            "n": 326,
+            "n_invalid": 0,
+            "nme": 0.0860927521996044,
+            "nme_median": 0.07626294271816038,
+            "nme_std": 0.04275995075352588,
+            "failure_rate": 0.2392638036809816,
+            "auc": 0.2421839016931042,
+            "mae_px": 2.5975402746920007
+          },
+          "expression": {
+            "n": 314,
+            "n_invalid": 0,
+            "nme": 0.05332951482022022,
+            "nme_median": 0.045902046582317425,
+            "nme_std": 0.0340789204729809,
+            "failure_rate": 0.050955414012738856,
+            "auc": 0.4941374495514623,
+            "mae_px": 2.457337897318616
+          },
+          "illumination": {
+            "n": 698,
+            "n_invalid": 0,
+            "nme": 0.04937694295756173,
+            "nme_median": 0.0404491541877839,
+            "nme_std": 0.03398875942749959,
+            "failure_rate": 0.054441260744985676,
+            "auc": 0.534404031538702,
+            "mae_px": 2.292482923952963
+          },
+          "makeup": {
+            "n": 206,
+            "n_invalid": 0,
+            "nme": 0.04904765312240759,
+            "nme_median": 0.041498586735742096,
+            "nme_std": 0.032954242474850355,
+            "failure_rate": 0.06796116504854369,
+            "auc": 0.5332516983002419,
+            "mae_px": 2.978733695194285
+          },
+          "occlusion": {
+            "n": 736,
+            "n_invalid": 0,
+            "nme": 0.06190907509213411,
+            "nme_median": 0.049791095647116076,
+            "nme_std": 0.03900898762682272,
+            "failure_rate": 0.13179347826086957,
+            "auc": 0.4335129966923446,
+            "mae_px": 2.7467202600125784
+          },
+          "blur": {
+            "n": 773,
+            "n_invalid": 0,
+            "nme": 0.05833578548134834,
+            "nme_median": 0.04779510832202313,
+            "nme_std": 0.035924850860631144,
+            "failure_rate": 0.09184993531694696,
+            "auc": 0.4547924379748442,
+            "mae_px": 1.9166853642353756
+          }
+        }
       }
     }
   },
@@ -1685,7 +1982,8 @@
       "augmented",
       "proposed",
       "robust",
-      "heatmap"
+      "heatmap",
+      "pseudo"
     ],
     "groups": {
       "East_Asian": {
@@ -1713,6 +2011,10 @@
           "heatmap": {
             "flip": 0.03923275175038725,
             "crop": 0.01692998325219378
+          },
+          "pseudo": {
+            "flip": 0.03140974754622827,
+            "crop": 0.015477379566679399
           }
         }
       },
@@ -1741,6 +2043,10 @@
           "heatmap": {
             "flip": 0.02933032253291458,
             "crop": 0.013884679645610352
+          },
+          "pseudo": {
+            "flip": 0.023637606085588535,
+            "crop": 0.010792202174973984
           }
         }
       },
@@ -1769,6 +2075,10 @@
           "heatmap": {
             "flip": 0.03919914328027516,
             "crop": 0.01713860044799124
+          },
+          "pseudo": {
+            "flip": 0.03022518417487542,
+            "crop": 0.013998719062656165
           }
         }
       },
@@ -1797,6 +2107,10 @@
           "heatmap": {
             "flip": 0.03773155771506329,
             "crop": 0.018664683043801537
+          },
+          "pseudo": {
+            "flip": 0.03730804295279086,
+            "crop": 0.0153270243636022
           }
         }
       },
@@ -1825,6 +2139,10 @@
           "heatmap": {
             "flip": 0.03086839345904688,
             "crop": 0.014033720013685524
+          },
+          "pseudo": {
+            "flip": 0.029016645839437843,
+            "crop": 0.013771458596456796
           }
         }
       },
@@ -1853,6 +2171,10 @@
           "heatmap": {
             "flip": 0.04814466945361346,
             "crop": 0.021205421647367377
+          },
+          "pseudo": {
+            "flip": 0.038974482634415226,
+            "crop": 0.01818797817531352
           }
         }
       },
@@ -1881,10 +2203,14 @@
           "heatmap": {
             "flip": 0.04165476740182688,
             "crop": 0.019282425632700325
+          },
+          "pseudo": {
+            "flip": 0.03707154497814675,
+            "crop": 0.014137762368191033
           }
         }
       }
     }
   },
-  "web_model": "heatmap"
+  "web_model": "pseudo"
 }

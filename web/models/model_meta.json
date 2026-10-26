@@ -1,15 +1,15 @@
 {
-  "name": "APAC-Face Heatmap (multi-scale)",
+  "name": "APAC-Face Heatmap + APAC pseudo-labels",
   "model_file": "apac_face.onnx",
   "input_name": "image",
   "output_name": "landmarks",
-  "experiment": "heatmap",
+  "experiment": "pseudo",
   "input_size": 224,
   "box_scale": 1.2,
-  "val_nme": 0.04789754559998103,
-  "epoch": 57,
-  "onnx_max_abs_diff": 6.258487701416016e-07,
-  "onnx_sha256": "c4d8b88f678af557048ba13daf689c8994bd2d14991d96728751fbf4d70f3149",
+  "val_nme": 0.046333243353042224,
+  "epoch": 53,
+  "onnx_max_abs_diff": 4.172325134277344e-07,
+  "onnx_sha256": "c5b8da0f5b76c5acb4a4b34cd7a43fb63900cc156124975c2ad2213bbc23b19f",
   "mean": [
     0.48500001430511475,
     0.4560000002384186,
@@ -321,5 +321,5 @@
     "dx": -0.001278246520087123,
     "dy": 0.08092279732227325
   },
-  "exported": "2026-10-26 02:32:02"
+  "exported": "2026-10-27 04:58:04"
 }

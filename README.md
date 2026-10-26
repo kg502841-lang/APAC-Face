@@ -38,8 +38,8 @@ The committed checkpoints were trained with PyTorch 2.6.0 (CUDA 12.4) and evalua
 | Augmented (ablation) | 6.75% | 5.58% | 13.24% | 0.387 | 3.07 | 7.3% |
 | **Proposed** | **6.40%** | **5.38%** | **11.84%** | **0.408** | **2.93** | **12.1%** |
 | Detector-robust (previous deployed model) | 6.49% | 5.40% | 12.08% | 0.405 | 2.96 | 10.9% |
-| **Heatmap (multi-scale, deployed)** | **5.20%** | **4.28%** | **7.00%** | **0.511** | **2.34** | **28.6%** |
-| Heatmap + APAC pseudo-labels (candidate) | 4.99% | 4.11% | 6.16% | 0.525 | 2.24 | 31.4% |
+| Heatmap (multi-scale) | 5.20% | 4.28% | 7.00% | 0.511 | 2.34 | 28.6% |
+| **Heatmap + APAC pseudo-labels (deployed)** | **4.99%** | **4.11%** | **6.16%** | **0.525** | **2.24** | **31.4%** |
 
 - **Proposed vs baseline:** mean NME drops by 0.88 points (paired bootstrap 95% CI 0.77 to 1.00; none of the
   2,000 bootstrap resamples showed no gain, i.e. p < 0.0005). The failure rate falls from 17.0% to 11.8%.
@@ -69,7 +69,8 @@ MediaPipe detected 2,267 of 2,500 faces (90.7%); every number below uses those 2
 | Google MediaPipe | 8.44% | 6.44% | 6.14 px | 3.52 px | 21.2% | 32.3% | 47.0 / 67.7 / 76.1% |
 | MediaPipe, offset-corrected | 7.28% | 5.46% | 5.16 px | 2.78 px | 17.7% | 24.9% | 57.6 / 75.1 / 81.5% |
 | Detector-robust, same face location as MediaPipe (previous) | 6.51% | 5.85% | 4.79 px | 2.98 px | 8.8% | 22.0% | 55.2 / 78.0 / 85.8% |
-| **Heatmap, same face location as MediaPipe** (deployed) | **5.15%** | **4.32%** | **3.74 px** | **2.06 px** | **4.2%** | **14.1%** | **70.7 / 85.9 / 90.6%** |
+| Heatmap, same face location as MediaPipe | 5.15% | 4.32% | 3.74 px | 2.06 px | 4.2% | 14.1% | 70.7 / 85.9 / 90.6% |
+| **Heatmap + pseudo-labels, same face location** (deployed) | **4.99%** | **4.17%** | **3.61 px** | **1.97 px** | **3.7%** | **13.2%** | **72.3 / 86.8 / 91.2%** |
 | Proposed, standard WFLW crop | 5.69% | 5.22% | 4.32 px | 2.92 px | 6.5% | 20.8% | 55.7 / 79.2 / 87.3% |
 | Detector-robust, standard WFLW crop | 5.74% | 5.24% | 4.34 px | 2.93 px | 7.0% | 21.0% | 55.7 / 79.0 / 86.9% |
 | Heatmap, standard WFLW crop | 4.43% | 3.68% | 3.32 px | 2.04 px | 3.2% | 13.2% | 71.4 / 86.8 / 91.5% |
@@ -82,7 +83,11 @@ MediaPipe detected 2,267 of 2,500 faces (90.7%); every number below uses those 2
 - **Offset-corrected MediaPipe** gives MediaPipe its best case. Its mesh follows a different landmark convention
   from manual annotation (most visibly on the jaw). So the median per-point offset to ground truth, in an
   eye-aligned frame, is learned on 1,914 WFLW *training* faces and added to its test predictions.
-- **Against MediaPipe as shipped**, the deployed heatmap model is better on every metric: NME −38.9% with the same
+- **The deployed model** (heatmap + APAC pseudo-labels, see
+  [self-training](#self-training-on-12000-unlabelled-apac-photos-pseudo-labels)) improves on the heatmap model
+  in every row: NME −41% vs MediaPipe and −31% vs offset-corrected MediaPipe (inner face −24%, p < 0.0005).
+  The bullets below describe the heatmap model, which introduced the architecture change.
+- **Against MediaPipe as shipped**, the heatmap model is better on every metric: NME −38.9% with the same
   face location (95% CI of the drop 3.17–3.40 points), mean error 3.74 vs 6.14 px, failure rate 4.2% vs 21.2%,
   inner-face NME −33.0% (p < 0.0005).
 - **Against offset-corrected MediaPipe**, it is also better on all 68 points (−29.2%, CI of the drop 2.00–2.24
@@ -191,7 +196,11 @@ evaluate anything.
 - **Why the gain is limited.** The labels come from the model itself, so they can teach it consistency and
   more face variety, not new knowledge of where points truly are. Hand labels (the labelling tool) remain the
   way to improve accuracy on APAC faces specifically.
-- **Status.** The candidate is saved as `checkpoints/pseudo.pth`. The deployed model is still `heatmap`.
+- **Status.** Deployed (`inference.default_model` and `web_model`: `pseudo`), as a trade-off: clearly better on
+  the in-the-wild test set, a negligible 0.016 points worse on SCUT's frontal East Asian faces. The refinement
+  settings were re-checked on validation and stay the same (Haar boxes: 2 passes, 3.51%; MediaPipe seeds: one
+  pass, 4.46%). In the browser it matches PyTorch to 0.18 px on average, and on the 70-face gallery it beats
+  MediaPipe on 57 of the 58 faces MediaPipe detects (the heatmap model: 55).
 
 ### Video benchmark: tracking stability, lag and failures
 
@@ -217,15 +226,22 @@ the setting that matches MediaPipe's still jitter with the least motion error wa
 | Detector-robust, One Euro | 0.31% (0.43%) | 4.95% | 6.27% | 23.3% | 5.2% | 11.4 |
 | Heatmap, raw | 1.15% (1.25%) | 4.07% | **4.23%** | **15.0%** | 5.2% | 12.3 |
 | Heatmap, EMA | 0.76% (0.81%) | 3.96% | 5.60% | 16.7% | 5.2% | 12.3 |
-| **Heatmap, One Euro (deployed)** | 0.42% (0.50%) | **3.93%** | 4.55% | 16.7% | 5.2% | 12.3 |
+| Heatmap, One Euro | 0.42% (0.50%) | 3.93% | 4.55% | 16.7% | 5.2% | 12.3 |
+| Heatmap + pseudo-labels, raw | 0.98% (1.08%) | 3.92% | **4.08%** | **10.0%** | 5.2% | 11.2 |
+| Heatmap + pseudo-labels, EMA | 0.62% (0.70%) | 3.86% | 5.40% | 13.3% | 5.2% | 11.2 |
+| **Heatmap + pseudo-labels, One Euro (deployed)** | 0.32% (0.41%) | **3.82%** | 4.45% | 13.3% | 5.2% | 11.2 |
 
-- **Accuracy while tracking:** the deployed setup has 37% lower median error than MediaPipe on still faces
-  (3.93% vs 6.22%) and 31% lower on moving faces (4.55% vs 6.63%), and loses fewer tracks (a lost track = mean NME
-  over the sequence > 10%).
-- **Stability: MediaPipe is still steadier on a typical still face** (median jitter 0.24% vs 0.42%). Its mean
-  jitter is worse (1.81%) because of a few sequences where its tracker jumps. The One Euro filter cut our raw
-  median jitter by 63% for a 0.3-point motion-error cost; EMA cut it less and lagged more.
-- **Lag:** the One Euro filter raises motion NME from 4.23% to 4.55%, which is the lag it adds; EMA adds 1.4 points.
+(The robust rows come from the earlier run of the same 60 sequences; `results/video_benchmark_test.json` now
+holds the heatmap and deployed rows.)
+
+- **Accuracy while tracking:** the deployed setup has 39% lower median error than MediaPipe on still faces
+  (3.82% vs 6.22%) and 33% lower on moving faces (4.45% vs 6.63%), and loses about half as many tracks (13.3% vs
+  25.0%; a lost track = mean NME over the sequence > 10%).
+- **Stability: MediaPipe is still steadier on a typical still face**, though the gap narrowed (median jitter 0.24%
+  vs 0.32%; heatmap 0.42%). MediaPipe's mean jitter is worse (1.81%) because of a few sequences where its tracker
+  jumps. The One Euro filter cut our raw median jitter by 67% for a 0.4-point motion-error cost; EMA cut it less and
+  lagged more.
+- **Lag:** the One Euro filter raises motion NME from 4.08% to 4.45%, which is the lag it adds; EMA adds 1.3 points.
 - The synthetic motion is a stand-in for real video; per-frame manually annotated video would be needed to
   confirm these numbers on real head motion. APAC-Face ms/frame is the Python tracker on the GPU; MediaPipe runs on
   the CPU.
@@ -290,15 +306,20 @@ every condition further; its large-pose gap to the full test set is 3.7 points.
 labels come from the archive's file names. These images have **no landmark ground truth**, so the two
 metrics below measure stability, not correctness. Lower is better; brackets are 95% bootstrap CIs.
 
-| Group | Haar detection | Flip inconsistency: baseline | proposed | heatmap (deployed) | Crop instability: baseline | proposed | heatmap |
-|---|---|---|---|---|---|---|---|
-| East Asian | 81% | 5.91% [5.35, 6.49] | 4.39% [3.72, 5.12] | 3.92% [3.06, 5.00] | 4.32% | 2.15% | 1.69% |
-| Southeast Asian | 82% | 5.89% [5.32, 6.49] | 4.11% [3.47, 4.85] | 3.92% [2.97, 5.00] | 4.26% | 1.97% | 1.71% |
-| South Asian (Indian) | 89% | 5.28% [4.80, 5.80] | 3.50% [3.05, 4.02] | 2.93% [2.31, 3.65] | 4.10% | 1.80% | 1.39% |
-| White (reference) | 77% | 6.56% | 4.32% | 4.17% | 4.54% | 2.08% | 1.93% |
-| Black (reference) | 75% | 6.65% | 4.64% | 3.77% | 4.57% | 2.11% | 1.87% |
-| Latino / Hispanic (reference) | 85% | 5.80% | 4.13% | 3.09% | 4.14% | 1.91% | 1.40% |
-| Middle Eastern (reference) | 80% | 6.63% | 5.13% | 4.81% | 4.73% | 2.54% | 2.12% |
+| Group | Haar detection | Flip inconsistency: baseline | proposed | heatmap | heatmap + pseudo (deployed) | Crop instability: baseline | proposed | heatmap | deployed |
+|---|---|---|---|---|---|---|---|---|---|
+| East Asian | 81% | 5.91% [5.35, 6.49] | 4.39% [3.72, 5.12] | 3.92% [3.06, 5.00] | 3.14% [2.47, 3.96] | 4.32% | 2.15% | 1.69% | 1.55% |
+| Southeast Asian | 82% | 5.89% [5.32, 6.49] | 4.11% [3.47, 4.85] | 3.92% [2.97, 5.00] | 3.02% [2.34, 3.75] | 4.26% | 1.97% | 1.71% | 1.40% |
+| South Asian (Indian) | 89% | 5.28% [4.80, 5.80] | 3.50% [3.05, 4.02] | 2.93% [2.31, 3.65] | 2.36% [1.82, 3.09] | 4.10% | 1.80% | 1.39% | 1.08% |
+| White (reference) | 77% | 6.56% | 4.32% | 4.17% | 3.71% | 4.54% | 2.08% | 1.93% | 1.41% |
+| Black (reference) | 75% | 6.65% | 4.64% | 3.77% | 3.73% | 4.57% | 2.11% | 1.87% | 1.53% |
+| Latino / Hispanic (reference) | 85% | 5.80% | 4.13% | 3.09% | 2.90% | 4.14% | 1.91% | 1.40% | 1.38% |
+| Middle Eastern (reference) | 80% | 6.63% | 5.13% | 4.81% | 3.90% | 4.73% | 2.54% | 2.12% | 1.82% |
+
+**Overlap note for the deployed model:** 225 of these 2,100 photos were among its machine-labelled training
+photos. On the photos it never saw, the gain over the heatmap model holds: flip inconsistency East Asian 4.10% →
+3.31% (p = 0.002), Southeast Asian 4.23% → 3.29% (p = 0.003), South Asian 3.13% → 2.51% (p = 0.04), and crop
+instability falls in all three groups.
 
 How to read this, without over-claiming:
 
@@ -342,21 +363,21 @@ Left out: the jaw (SCUT's outline starts at eyebrow height and continues over th
 and nostrils (SCUT traces the sides of the nose), the lower lip (6 vs 5 points) and the inner lip (absent).
 Every ordering the map relies on holds on more than 99.6% of faces. NME uses the labelled outer eye corners.
 
-| Group (faces) | MediaPipe | MediaPipe corrected | Baseline | Detector-robust | **Heatmap (deployed)** |
-|---|---|---|---|---|---|
-| Asian (4,000) | 3.71% | 2.64% | 3.19% | 3.22% | **2.51%** |
-| Caucasian (1,499) | 4.15% | **3.40%** | 3.68% | 3.59% | 3.41% |
-| Asian women / men | 3.66 / 3.76% | 2.57 / 2.70% | 3.25 / 3.12% | 3.32 / 3.11% | **2.47 / 2.56%** |
-| Caucasian women / men | 4.02 / 4.28% | 3.20 / **3.59%** | 3.60 / 3.76% | 3.51 / 3.67% | **3.17** / 3.64% |
-| Gap, Asian − Caucasian (95% CI) | −0.44 [−0.54, −0.37] | −0.76 [−0.87, −0.69] | −0.49 [−0.59, −0.42] | −0.37 [−0.48, −0.30] | −0.89 [−1.00, −0.82] |
+| Group (faces) | MediaPipe | MediaPipe corrected | Baseline | Detector-robust | Heatmap | **Heatmap + pseudo (deployed)** |
+|---|---|---|---|---|---|---|
+| Asian (4,000) | 3.71% | 2.64% | 3.19% | 3.22% | **2.51%** | 2.53% |
+| Caucasian (1,499) | 4.15% | **3.40%** | 3.68% | 3.59% | 3.41% | 3.41% |
+| Asian women / men | 3.66 / 3.76% | 2.57 / 2.70% | 3.25 / 3.12% | 3.32 / 3.11% | **2.47 / 2.56%** | 2.48 / 2.57% |
+| Caucasian women / men | 4.02 / 4.28% | 3.20 / **3.59%** | 3.60 / 3.76% | 3.51 / 3.67% | **3.17** / 3.64% | 3.18 / 3.63% |
+| Gap, Asian − Caucasian (95% CI) | −0.44 [−0.54, −0.37] | −0.76 [−0.87, −0.69] | −0.49 [−0.59, −0.42] | −0.37 [−0.48, −0.30] | −0.89 [−1.00, −0.82] | −0.88 [−0.98, −0.80] |
 
-- **On Asian faces the deployed model is the most accurate method:**
-  - 32% lower NME than MediaPipe (2.51% vs 3.71%; 95% CI of the drop 1.18–1.21 points).
-  - 21% lower than the baseline (CI 0.66–0.69 points).
-  - 4.7% lower than offset-corrected MediaPipe (CI 0.11–0.13 points).
-  - Best on every region: eyebrows 3.76%, eyes 1.58%, nose and upper lip 2.35%.
-- **On Caucasian faces** it beats MediaPipe as shipped (−0.74 points) and the baseline (−0.28 points). It is
-  **tied with offset-corrected MediaPipe** (3.41% vs 3.40%, p = 0.30).
+- **On Asian faces our two heatmap models are the most accurate methods.** The deployed one (2.53%) has:
+  - 32% lower NME than MediaPipe (3.71%; 95% CI of the drop 1.16–1.19 points).
+  - 21% lower than the baseline (CI 0.64–0.68 points).
+  - 4.1% lower than offset-corrected MediaPipe (CI 0.10–0.12 points).
+  - The heatmap model without pseudo-labels is 0.016 points better still (2.51%).
+- **On Caucasian faces** the deployed model beats MediaPipe as shipped (−0.74 points) and the baseline
+  (−0.28 points). It is **tied with offset-corrected MediaPipe** (3.41% vs 3.40%, p = 0.28).
 - **This dataset does not show the premise of the problem statement.** Every method, MediaPipe included, is
   *more* accurate on SCUT's Asian faces than on its Caucasian faces (negative gaps).
   - **Confounded groups:** per the dataset's README, most images come from the internet, some Asian faces
@@ -407,7 +428,7 @@ in [0, 1].
 
 - *Regression head* (`baseline`, `augmented`, `proposed`, `robust`): global average pooling -> Linear(1280->512)
   -> ReLU -> Dropout(0.2) -> Linear(512->196). The head bias starts at the mean training face. 2.98 M parameters.
-- *Heatmap head* (`heatmap`, deployed): multi-scale decoder over strides 4–32 -> 98 heatmaps at 56x56 -> spatial
+- *Heatmap head* (`heatmap`, and `pseudo`, which is deployed): multi-scale decoder over strides 4–32 -> 98 heatmaps at 56x56 -> spatial
   softmax -> soft-argmax coordinates, plus a per-point confidence. 2.20 M parameters. See
   [Heatmap model](#heatmap-model-architecture-change-for-precision).
 
@@ -440,7 +461,8 @@ validation NME), mixed precision, seed 42 and a 60-epoch budget. Only the traini
 | `augmented` | flip (with left/right index remapping), rotation +/-20 deg, scale +/-10%, shift +/-5%, brightness/contrast +/-25%, blur, grayscale, synthetic occlusion | uniform | ablation: effect of augmentation alone |
 | `proposed` | same as `augmented` | attribute-balanced | full method |
 | `robust` | same as `augmented`, half of the crops from MediaPipe-style boxes | attribute-balanced | detector-robust regression; checkpoint chosen on MediaPipe-seeded validation |
-| `heatmap` | same as `robust` | attribute-balanced | `robust` recipe with the multi-scale heatmap head; deployed model |
+| `heatmap` | same as `robust` | attribute-balanced | `robust` recipe with the multi-scale heatmap head |
+| `pseudo` | same as `robust` | attribute-balanced, plus 30% machine-labelled APAC faces | `heatmap` + self-training; deployed model |
 
 Attribute-balanced sampling up-weights faces with rare WFLW conditions: each attribute gives a face the
 weight 0.5 / P(its value), weights are averaged over the six attributes, and the average is raised to the
@@ -544,7 +566,11 @@ python -m src.train --experiment proposed
 python -m src.mediapipe_baseline                       # once: learns MediaPipe's box mapping (needs mediapipe)
 python -m src.mediapipe_baseline --export-boxes        # MediaPipe-style boxes, needed by the next run
 python -m src.train --experiment robust                # detector-robust regression
-python -m src.train --experiment heatmap               # deployed model (same recipe, heatmap head)
+python -m src.train --experiment heatmap               # same recipe, heatmap head
+python -m src.pseudo_labels copy --source path/to/unlabelled_photos   # self-training data (source only read)
+python -m src.pseudo_labels check                       # is the 10-view teacher better? (WFLW val)
+python -m src.pseudo_labels label                       # machine labels -> data/cache/pseudo.npz
+python -m src.train --experiment pseudo                # deployed model (heatmap + pseudo-labels)
 python -m src.train --experiment proposed --resume      # continue an interrupted run
 python -m src.train --experiment baseline --smoke       # 2-epoch pipeline check
 ```
@@ -635,7 +661,7 @@ and About.
 Single-image command line:
 
 ```bash
-python -m src.inference --image face.jpg --out results/predictions/face.png   # deployed model (heatmap)
+python -m src.inference --image face.jpg --out results/predictions/face.png   # deployed model (pseudo)
 ```
 
 ### Faceify web app (browser, both models on-device)
@@ -644,7 +670,7 @@ python -m src.inference --image face.jpg --out results/predictions/face.png   # 
 restyled in the warm editorial look of faceifylabs.com (cream paper, ink text, sage accent, Newsreader serif
 headings over DM Sans, pill buttons, hairline tables). Two things changed in function:
 
-- **"Optimized for Diverse Faces" is now the trained APAC-Face network** (the deployed heatmap model),
+- **"Optimized for Diverse Faces" is now the trained APAC-Face network** (the deployed model, heatmap + pseudo-labels),
   running in the browser through ONNX Runtime Web (`web/models/apac_face.onnx`). It used to be MediaPipe
   remapped to 68 points.
 - **The baseline is Google MediaPipe Face Landmarker** (`@mediapipe/tasks-vision`), loading the same
@@ -669,16 +695,17 @@ needs internet access for the ONNX Runtime and MediaPipe scripts (jsDelivr CDN).
 - **Ground truth is real only.** The original app derived every sample's "ground truth" from one 68-point
   template face (`BASE_TEMPLATE_68`), and generated it for any unannotated image too. Its error numbers measured
   the distance to a template, not to the real landmarks. That code is gone.
-- **Verified:** for the same image and crop, the browser model and the PyTorch model differ by 0.27 px on average
-  (2.2 px max, face with a 111 px inter-ocular distance; the canvas and OpenCV resample the crop slightly
-  differently). On the 70-face WFLW gallery, most of it the hardest challenge conditions, APAC-Face beat MediaPipe
-  on 55 of the 58 faces MediaPipe detected:
+- **Verified:** for the same image and crop, the browser model and the PyTorch model differ by 0.18 px on average
+  (1.1 px max, face with a 111 px inter-ocular distance; the canvas and OpenCV resample the crop slightly
+  differently). On the 70-face WFLW gallery, most of it the hardest challenge conditions, the deployed model beat
+  MediaPipe on 57 of the 58 faces MediaPipe detected:
 
   | 58 gallery faces, in the browser | Mean Euclidean Error | NME | Maximum Landmark Error | Failure Rate (>8% NME) |
   |---|---|---|---|---|
   | Google MediaPipe | 11.01 px | 10.74% | 34.4 px | 39.5% |
   | APAC-Face, detector-robust (before) | 9.06 px | 8.75% | 20.8 px | 28.5% |
-  | **APAC-Face, heatmap (deployed)** | **7.68 px** | **7.36%** | **20.5 px** | **17.8%** |
+  | APAC-Face, heatmap | 7.68 px | 7.36% | 20.5 px | 17.8% |
+  | **APAC-Face, heatmap + pseudo-labels (deployed)** | **7.44 px** | **7.11%** | **19.7 px** | **16.1%** |
 - **Live mode** tracks the face from frame to frame, with MediaPipe re-checking every 15 frames. Our model runs in
   about 70 ms per frame on the CPU (WebAssembly, 4 threads), about 14 FPS (124 ms with one thread; the previous
   regression model took about 60 ms with one thread). When MediaPipe finds no face on a
