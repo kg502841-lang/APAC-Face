@@ -19,11 +19,11 @@ from typing import Any
 import numpy as np
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, WeightedRandomSampler
+from torch.utils.data import ConcatDataset, DataLoader, WeightedRandomSampler
 
 from .augmentations import AugmentationParams, LandmarkAugmenter, apply_affine, crop_matrix
 from .dataset import (ATTRIBUTES, DatasetNotFoundError, WFLWCropDataset, balanced_sample_weights,
-                      build_cache, canonical_cache_box, load_detector_boxes)
+                      build_cache, canonical_cache_box, load_detector_boxes, load_split)
 from .metrics import per_sample_nme
 from .model import build_model, count_parameters, model_config, save_inference_checkpoint
 from .utils import (LOG_FORMAT, auto_batch_size, describe_device, get_device, get_logger,
@@ -154,12 +154,33 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
     bs = auto_batch_size(int(batch_size or tcfg["batch_size"]), device)
     gen = torch.Generator().manual_seed(seed)
     sampler = None
+    weights = None
+    wflw_train_ds = train_ds
+    epoch_size = len(train_ds)
     if exp_cfg["balanced_sampling"]:
         cols = [ATTRIBUTES.index(a) for a in cfg["sampling"]["attributes"]]
         weights = balanced_sample_weights(train_ds.attributes, cols, float(cfg["sampling"]["power"]))
-        sampler = WeightedRandomSampler(torch.as_tensor(weights, dtype=torch.double),
-                                        num_samples=len(train_ds), replacement=True, generator=gen)
         log.info("Balanced sampling: weight range %.2f-%.2f", weights.min(), weights.max())
+    pseudo_split = exp_cfg.get("pseudo_data")
+    if pseudo_split:
+        # Machine-labelled APAC faces (src/pseudo_labels.py) join the WFLW training faces. They make up a
+        # fixed share of every epoch, spread evenly over demographic groups; epochs keep the WFLW length.
+        pseudo = load_split(cfg, pseudo_split)
+        pseudo_ds = WFLWCropDataset(cfg, pseudo_split, LandmarkAugmenter(params, size, exp_cfg["augment"]),
+                                    limit=256 if smoke else None, detector_boxes=pseudo["det_boxes"],
+                                    detector_prob=det_prob)
+        frac = float(exp_cfg.get("pseudo_fraction", 0.3))
+        groups = pseudo["groups"][:len(pseudo_ds)]
+        _, inverse, counts = np.unique(groups, return_inverse=True, return_counts=True)
+        w_pseudo = 1.0 / counts[inverse]
+        w_wflw = np.ones(len(train_ds)) if weights is None else np.asarray(weights, np.float64)
+        weights = np.concatenate([w_wflw / w_wflw.sum() * (1 - frac), w_pseudo / w_pseudo.sum() * frac])
+        wflw_train_ds, train_ds = train_ds, ConcatDataset([train_ds, pseudo_ds])
+        log.info("Pseudo-labelled faces: %d (%s), %.0f%% of each epoch", len(pseudo_ds), str(pseudo["label_source"]),
+                 frac * 100)
+    if weights is not None:
+        sampler = WeightedRandomSampler(torch.as_tensor(weights, dtype=torch.double),
+                                        num_samples=epoch_size, replacement=True, generator=gen)
     # On Windows every worker process loads the CUDA libraries (~1.3 GB of committed memory), so
     # only the training loader gets workers; validation crops are few and load in-process.
     workers = int(cfg["data"]["num_workers"])
@@ -173,7 +194,7 @@ def _train(cfg: dict[str, Any], experiment: str, run_name: str, resume: bool, sm
                                  pin_memory=device.type == "cuda") if val_det_ds is not None else None)
 
     model = build_model(model_config(cfg, experiment)).to(device)
-    shape0 = mean_shape(cfg, train_ds)
+    shape0 = mean_shape(cfg, wflw_train_ds)
     model.init_mean_shape(shape0)
     criterion = make_loss(tcfg)
     optimizer = torch.optim.AdamW(model.parameter_groups(float(tcfg["lr"]), float(tcfg["head_lr_mult"])),

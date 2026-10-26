@@ -1,0 +1,64 @@
+2026-10-27 03:13:56 | INFO    | train | Balanced sampling: weight range 0.80-3.64
+2026-10-27 03:13:56 | INFO    | train | Pseudo-labelled faces: 8650 (pseudo-label: heatmap teacher, 10-view average (machine-made, not ground truth)), 30% of each epoch
+2026-10-27 03:13:56 | INFO    | train | Experiment pseudo | Heatmap recipe plus machine-labelled APAC photos (src/pseudo_labels.py), 30% of every epoch, balanced over groups. | device NVIDIA GeForce RTX 4050 Laptop GPU (6.0 GB VRAM) | batch 32 | epochs 60 | 15435 train / 715 val faces | 2.20M params
+2026-10-27 03:17:00 | INFO    | train | epoch   1/60  train 0.05956  val 0.02907  val NME 0.1183 *  (canonical 0.1151)  lr 1.0e-04  184s
+2026-10-27 03:17:45 | INFO    | train | epoch   2/60  train 0.02969  val 0.02175  val NME 0.0934 *  (canonical 0.0896)  lr 1.0e-04  45s
+2026-10-27 03:18:27 | INFO    | train | epoch   3/60  train 0.02289  val 0.01807  val NME 0.0811 *  (canonical 0.0764)  lr 1.0e-04  42s
+2026-10-27 03:19:04 | INFO    | train | epoch   4/60  train 0.01950  val 0.01667  val NME 0.0771 *  (canonical 0.0713)  lr 1.0e-04  37s
+2026-10-27 03:19:41 | INFO    | train | epoch   5/60  train 0.01706  val 0.01504  val NME 0.0707 *  (canonical 0.0655)  lr 1.0e-04  36s
+2026-10-27 03:20:17 | INFO    | train | epoch   6/60  train 0.01566  val 0.01384  val NME 0.0668 *  (canonical 0.0612)  lr 1.0e-04  36s
+2026-10-27 03:20:53 | INFO    | train | epoch   7/60  train 0.01499  val 0.01319  val NME 0.0647 *  (canonical 0.0590)  lr 1.0e-04  36s
+2026-10-27 03:21:27 | INFO    | train | epoch   8/60  train 0.01349  val 0.01279  val NME 0.0634 *  (canonical 0.0575)  lr 1.0e-04  34s
+2026-10-27 03:22:02 | INFO    | train | epoch   9/60  train 0.01340  val 0.01209  val NME 0.0612 *  (canonical 0.0549)  lr 1.0e-04  35s
+2026-10-27 03:22:37 | INFO    | train | epoch  10/60  train 0.01252  val 0.01182  val NME 0.0601 *  (canonical 0.0540)  lr 1.0e-04  34s
+2026-10-27 03:23:11 | INFO    | train | epoch  11/60  train 0.01149  val 0.01166  val NME 0.0594 *  (canonical 0.0534)  lr 1.0e-04  35s
+2026-10-27 03:23:46 | INFO    | train | epoch  12/60  train 0.01212  val 0.01150  val NME 0.0589 *  (canonical 0.0528)  lr 1.0e-04  35s
+2026-10-27 03:24:21 | INFO    | train | epoch  13/60  train 0.01165  val 0.01118  val NME 0.0581 *  (canonical 0.0517)  lr 1.0e-04  35s
+2026-10-27 03:24:56 | INFO    | train | epoch  14/60  train 0.01084  val 0.01052  val NME 0.0555 *  (canonical 0.0493)  lr 1.0e-04  34s
+2026-10-27 03:25:32 | INFO    | train | epoch  15/60  train 0.01103  val 0.01046  val NME 0.0553 *  (canonical 0.0491)  lr 1.0e-04  36s
+2026-10-27 03:26:10 | INFO    | train | epoch  16/60  train 0.01058  val 0.01015  val NME 0.0543 *  (canonical 0.0481)  lr 1.0e-04  38s
+2026-10-27 03:26:47 | INFO    | train | epoch  17/60  train 0.01010  val 0.01019  val NME 0.0543 *  (canonical 0.0482)  lr 1.0e-04  37s
+2026-10-27 03:27:24 | INFO    | train | epoch  18/60  train 0.00996  val 0.01001  val NME 0.0539 *  (canonical 0.0476)  lr 1.0e-04  37s
+2026-10-27 03:28:01 | INFO    | train | epoch  19/60  train 0.00981  val 0.00962  val NME 0.0524 *  (canonical 0.0462)  lr 1.0e-04  37s
+2026-10-27 03:28:38 | INFO    | train | epoch  20/60  train 0.00964  val 0.00979  val NME 0.0529  (canonical 0.0468)  lr 1.0e-04  37s
+2026-10-27 03:29:15 | INFO    | train | epoch  21/60  train 0.00985  val 0.00965  val NME 0.0524 *  (canonical 0.0463)  lr 1.0e-04  37s
+2026-10-27 03:29:51 | INFO    | train | epoch  22/60  train 0.00873  val 0.01012  val NME 0.0539  (canonical 0.0478)  lr 1.0e-04  36s
+2026-10-27 03:30:28 | INFO    | train | epoch  23/60  train 0.00907  val 0.00921  val NME 0.0506 *  (canonical 0.0446)  lr 1.0e-04  36s
+2026-10-27 03:31:05 | INFO    | train | epoch  24/60  train 0.00897  val 0.00919  val NME 0.0505 *  (canonical 0.0446)  lr 1.0e-04  37s
+2026-10-27 03:31:41 | INFO    | train | epoch  25/60  train 0.00894  val 0.00936  val NME 0.0510  (canonical 0.0452)  lr 1.0e-04  36s
+2026-10-27 03:32:18 | INFO    | train | epoch  26/60  train 0.00884  val 0.00920  val NME 0.0510  (canonical 0.0448)  lr 1.0e-04  37s
+2026-10-27 03:32:55 | INFO    | train | epoch  27/60  train 0.00944  val 0.00897  val NME 0.0499 *  (canonical 0.0437)  lr 1.0e-04  37s
+2026-10-27 03:33:31 | INFO    | train | epoch  28/60  train 0.00859  val 0.00898  val NME 0.0498 *  (canonical 0.0438)  lr 1.0e-04  37s
+2026-10-27 03:34:08 | INFO    | train | epoch  29/60  train 0.00911  val 0.00895  val NME 0.0499  (canonical 0.0437)  lr 1.0e-04  37s
+2026-10-27 03:35:53 | INFO    | train | epoch  30/60  train 0.00843  val 0.00895  val NME 0.0499  (canonical 0.0437)  lr 1.0e-04  105s
+2026-10-27 03:37:39 | INFO    | train | epoch  31/60  train 0.00788  val 0.00887  val NME 0.0495 *  (canonical 0.0433)  lr 1.0e-04  106s
+2026-10-27 03:38:48 | INFO    | train | epoch  32/60  train 0.00803  val 0.00879  val NME 0.0492 *  (canonical 0.0432)  lr 1.0e-04  69s
+2026-10-27 03:39:15 | INFO    | train | epoch  33/60  train 0.00827  val 0.00910  val NME 0.0502  (canonical 0.0442)  lr 1.0e-04  27s
+2026-10-27 03:39:41 | INFO    | train | epoch  34/60  train 0.00782  val 0.00887  val NME 0.0495  (canonical 0.0433)  lr 1.0e-04  27s
+2026-10-27 03:40:09 | INFO    | train | epoch  35/60  train 0.00794  val 0.00862  val NME 0.0487 *  (canonical 0.0425)  lr 1.0e-04  27s
+2026-10-27 03:40:35 | INFO    | train | epoch  36/60  train 0.00743  val 0.00845  val NME 0.0478 *  (canonical 0.0418)  lr 1.0e-04  26s
+2026-10-27 03:41:02 | INFO    | train | epoch  37/60  train 0.00804  val 0.00895  val NME 0.0497  (canonical 0.0436)  lr 1.0e-04  27s
+2026-10-27 03:41:28 | INFO    | train | epoch  38/60  train 0.00828  val 0.00898  val NME 0.0499  (canonical 0.0438)  lr 1.0e-04  26s
+2026-10-27 03:41:54 | INFO    | train | epoch  39/60  train 0.00778  val 0.00862  val NME 0.0485  (canonical 0.0425)  lr 1.0e-04  27s
+2026-10-27 03:42:21 | INFO    | train | epoch  40/60  train 0.00823  val 0.00879  val NME 0.0493  (canonical 0.0431)  lr 1.0e-04  26s
+2026-10-27 03:42:47 | INFO    | train | epoch  41/60  train 0.00779  val 0.00844  val NME 0.0478  (canonical 0.0417)  lr 5.0e-05  26s
+2026-10-27 03:43:13 | INFO    | train | epoch  42/60  train 0.00746  val 0.00833  val NME 0.0473 *  (canonical 0.0414)  lr 5.0e-05  26s
+2026-10-27 03:43:37 | INFO    | train | epoch  43/60  train 0.00757  val 0.00826  val NME 0.0470 *  (canonical 0.0411)  lr 5.0e-05  24s
+2026-10-27 03:43:58 | INFO    | train | epoch  44/60  train 0.00761  val 0.00837  val NME 0.0475  (canonical 0.0415)  lr 5.0e-05  22s
+2026-10-27 03:44:20 | INFO    | train | epoch  45/60  train 0.00728  val 0.00822  val NME 0.0470 *  (canonical 0.0409)  lr 5.0e-05  22s
+2026-10-27 03:44:42 | INFO    | train | epoch  46/60  train 0.00698  val 0.00833  val NME 0.0473  (canonical 0.0413)  lr 5.0e-05  22s
+2026-10-27 03:45:04 | INFO    | train | epoch  47/60  train 0.00808  val 0.00834  val NME 0.0473  (canonical 0.0414)  lr 5.0e-05  22s
+2026-10-27 03:45:26 | INFO    | train | epoch  48/60  train 0.00688  val 0.00846  val NME 0.0477  (canonical 0.0418)  lr 5.0e-05  22s
+2026-10-27 03:45:48 | INFO    | train | epoch  49/60  train 0.00736  val 0.00837  val NME 0.0473  (canonical 0.0415)  lr 5.0e-05  22s
+2026-10-27 03:46:11 | INFO    | train | epoch  50/60  train 0.00676  val 0.00819  val NME 0.0467 *  (canonical 0.0408)  lr 2.5e-05  23s
+2026-10-27 03:46:38 | INFO    | train | epoch  51/60  train 0.00660  val 0.00817  val NME 0.0466 *  (canonical 0.0408)  lr 2.5e-05  27s
+2026-10-27 03:47:04 | INFO    | train | epoch  52/60  train 0.00663  val 0.00819  val NME 0.0466  (canonical 0.0408)  lr 2.5e-05  26s
+2026-10-27 03:47:31 | INFO    | train | epoch  53/60  train 0.00674  val 0.00811  val NME 0.0463 *  (canonical 0.0405)  lr 2.5e-05  27s
+2026-10-27 03:47:57 | INFO    | train | epoch  54/60  train 0.00673  val 0.00812  val NME 0.0464  (canonical 0.0406)  lr 2.5e-05  27s
+2026-10-27 03:48:24 | INFO    | train | epoch  55/60  train 0.00683  val 0.00826  val NME 0.0469  (canonical 0.0410)  lr 2.5e-05  27s
+2026-10-27 03:48:51 | INFO    | train | epoch  56/60  train 0.00712  val 0.00812  val NME 0.0464  (canonical 0.0406)  lr 2.5e-05  27s
+2026-10-27 03:49:18 | INFO    | train | epoch  57/60  train 0.00683  val 0.00822  val NME 0.0467  (canonical 0.0409)  lr 2.5e-05  27s
+2026-10-27 03:49:44 | INFO    | train | epoch  58/60  train 0.00668  val 0.00812  val NME 0.0464  (canonical 0.0405)  lr 1.3e-05  27s
+2026-10-27 03:50:11 | INFO    | train | epoch  59/60  train 0.00650  val 0.00817  val NME 0.0466  (canonical 0.0407)  lr 1.3e-05  27s
+2026-10-27 03:50:38 | INFO    | train | epoch  60/60  train 0.00685  val 0.00815  val NME 0.0465  (canonical 0.0407)  lr 1.3e-05  27s
+2026-10-27 03:50:38 | INFO    | train | Done. Best val NME 0.0463 at epoch 53 -> D:\Projects\New Industrial\checkpoints\pseudo.pth

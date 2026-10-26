@@ -88,6 +88,18 @@ experiments:
     model:
       head: heatmap             # regression | heatmap
       decoder_dim: 96
+  pseudo:
+    label: Heatmap + APAC pseudo-labels
+    description: Heatmap recipe plus machine-labelled APAC photos (src/pseudo_labels.py), 30% of every epoch, balanced over groups.
+    augment: true
+    balanced_sampling: true
+    detector_crop_prob: 0.5
+    select_on: detector
+    pseudo_data: pseudo         # data/cache/pseudo.npz - machine labels, never used for evaluation
+    pseudo_fraction: 0.3
+    model:
+      head: heatmap
+      decoder_dim: 96
 
 eval:
   baseline: baseline

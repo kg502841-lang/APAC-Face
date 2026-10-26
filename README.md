@@ -39,6 +39,7 @@ The committed checkpoints were trained with PyTorch 2.6.0 (CUDA 12.4) and evalua
 | **Proposed** | **6.40%** | **5.38%** | **11.84%** | **0.408** | **2.93** | **12.1%** |
 | Detector-robust (previous deployed model) | 6.49% | 5.40% | 12.08% | 0.405 | 2.96 | 10.9% |
 | **Heatmap (multi-scale, deployed)** | **5.20%** | **4.28%** | **7.00%** | **0.511** | **2.34** | **28.6%** |
+| Heatmap + APAC pseudo-labels (candidate) | 4.99% | 4.11% | 6.16% | 0.525 | 2.24 | 31.4% |
 
 - **Proposed vs baseline:** mean NME drops by 0.88 points (paired bootstrap 95% CI 0.77 to 1.00; none of the
   2,000 bootstrap resamples showed no gain, i.e. p < 0.0005). The failure rate falls from 17.0% to 11.8%.
@@ -152,6 +153,45 @@ are unchanged.
 The refinement setting was re-checked on validation for the new model: Haar boxes 0 / 1 / 2 / 3 passes give
 4.23 / 3.81 / **3.65** / 3.60% (2 kept); with MediaPipe seeds a refinement pass changes 4.61% to 4.59%, so the
 web app keeps one pass.
+
+### Self-training on 12,000 unlabelled APAC photos (pseudo-labels)
+
+`src/pseudo_labels.py` adds unannotated APAC photos to training with **machine-made labels**. They are not
+ground truth. They are stored apart from every human label, marked as machine labels, and never used to
+evaluate anything.
+
+1. **Copy.** 12,000 photos (FairFace-style, group in the file name) were copied from the source folder to
+   `data/APAC_extra/images/`; the source folder was only read. 55 of them are faces set aside for the
+   hand-labelling test set, so they were left out.
+2. **Teacher.** The heatmap model labels each face from 10 views: the photo and its mirror image, each with 5
+   slightly shifted or scaled crops around MediaPipe's face location. The 10 predictions are averaged.
+3. **Reject uncertain faces.** The spread of the 10 views predicts the real error well (rank correlation 0.76
+   on WFLW validation). Faces whose views disagree more than the 80th percentile of validation faces were
+   dropped. On validation the kept faces' labels had **3.46% NME** (0.4% failures). Averaging alone helps
+   little (4.61% → 4.50% NME); the filter is what makes the labels usable.
+4. **Kept:** 8,650 faces (1,000 had no face MediaPipe could find, 2,295 were too uncertain): East Asian
+   1,252, Southeast Asian 1,101, South Asian 1,283, White 1,520, Latino 1,427, Black 1,224, Middle Eastern 843.
+5. **Training (`pseudo` experiment).** Identical to `heatmap`, from scratch, 60 epochs. The only difference:
+   30% of every epoch is drawn from these faces, balanced over groups. The checkpoint is selected on WFLW
+   validation, as before.
+
+| Test set (human labels) | Heatmap | + APAC pseudo-labels | Difference (95% CI) |
+|---|---|---|---|
+| WFLW test, 98 points (2,500 faces) | 5.20% | **4.99%** | −0.21 points (−0.16 to −0.26) |
+| WFLW test, MediaPipe face location, 68 points | 5.15% | **4.99%** | −0.17 points (−0.14 to −0.19) |
+| WFLW large pose / occlusion / blur | 8.92 / 6.55 / 6.11% | **8.61 / 6.19 / 5.83%** | better in all six conditions |
+| SCUT-FBP5500 Asian faces (4,000) | **2.51%** | 2.53% | +0.016 points (+0.012 to +0.020) |
+| SCUT-FBP5500 Caucasian faces (1,499) | 3.41% | 3.41% | 0.00 (p = 0.93) |
+
+- **On in-the-wild faces, the extra data helps.** WFLW test error drops 4%, and failures fall from 7.0% to
+  6.2%. Every condition and region improves.
+- **It does not help on SCUT's easy frontal East Asian faces.** There it is 0.016 points worse:
+  statistically detectable with 4,000 faces, but under 1% relative. That is not the APAC improvement the data
+  was meant to give.
+- **Why the gain is limited.** The labels come from the model itself, so they can teach it consistency and
+  more face variety, not new knowledge of where points truly are. Hand labels (the labelling tool) remain the
+  way to improve accuracy on APAC faces specifically.
+- **Status.** The candidate is saved as `checkpoints/pseudo.pth`. The deployed model is still `heatmap`.
 
 ### Video benchmark: tracking stability, lag and failures
 
@@ -428,6 +468,7 @@ APAC-Face/
 │   ├── evaluate.py          WFLW test evaluation, tables and figures
 │   ├── apac_eval.py         per-group consistency (and accuracy, given annotations)
 │   ├── apac_labels.py       hand-labelled APAC test set: prepare faces, progress, per-group accuracy
+│   ├── pseudo_labels.py     machine labels for unannotated APAC photos (self-training)
 │   ├── scut_eval.py         Asian vs Caucasian accuracy on SCUT-FBP5500 (manual landmarks)
 │   ├── serve_web.py         web server: cross-origin isolation + label storage for the labelling tool
 │   ├── inference.py         face detection, crop, predict, refine; CLI

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-26 03:29:35",
+  "generated": "2026-10-27 04:15:03",
   "dataset": "SCUT-FBP5500 v2 (non-commercial research use)",
   "faces": 5499,
   "missing_annotations": [
@@ -79,7 +79,8 @@
     "augmented": "Augmented (ablation)",
     "proposed": "Proposed",
     "robust": "Detector-robust",
-    "heatmap": "Heatmap (multi-scale)"
+    "heatmap": "Heatmap (multi-scale)",
+    "pseudo": "Heatmap + APAC pseudo-labels"
   },
   "groups": {
     "Asian": {
@@ -155,6 +156,16 @@
             "Eyebrows": 0.03757018223404884,
             "Eyes": 0.01580764912068844,
             "Nose + upper lip": 0.023524638265371323
+          }
+        },
+        "pseudo": {
+          "nme": 0.025277748703956604,
+          "nme_median": 0.024240024387836456,
+          "failure_rate": 0.00075,
+          "regions": {
+            "Eyebrows": 0.03844594210386276,
+            "Eyes": 0.015351541340351105,
+            "Nose + upper lip": 0.023706819862127304
           }
         }
       }
@@ -233,6 +244,16 @@
             "Eyes": 0.022124944254755974,
             "Nose + upper lip": 0.03349137678742409
           }
+        },
+        "pseudo": {
+          "nme": 0.034057825803756714,
+          "nme_median": 0.0318736732006073,
+          "failure_rate": 0.00066711140760507,
+          "regions": {
+            "Eyebrows": 0.049182385206222534,
+            "Eyes": 0.021725907921791077,
+            "Nose + upper lip": 0.03365000709891319
+          }
         }
       }
     },
@@ -309,6 +330,16 @@
             "Eyebrows": 0.03690700605511665,
             "Eyes": 0.015574688091874123,
             "Nose + upper lip": 0.023029712960124016
+          }
+        },
+        "pseudo": {
+          "nme": 0.024837417528033257,
+          "nme_median": 0.023965956643223763,
+          "failure_rate": 0.001,
+          "regions": {
+            "Eyebrows": 0.037705160677433014,
+            "Eyes": 0.015208490192890167,
+            "Nose + upper lip": 0.023196125403046608
           }
         }
       }
@@ -387,6 +418,16 @@
             "Eyes": 0.016040612012147903,
             "Nose + upper lip": 0.02401956357061863
           }
+        },
+        "pseudo": {
+          "nme": 0.02571807987987995,
+          "nme_median": 0.024550164118409157,
+          "failure_rate": 0.0005,
+          "regions": {
+            "Eyebrows": 0.03918672353029251,
+            "Eyes": 0.015494592487812042,
+            "Nose + upper lip": 0.024217514321208
+          }
         }
       }
     },
@@ -463,6 +504,16 @@
             "Eyebrows": 0.04436133801937103,
             "Eyes": 0.02110394835472107,
             "Nose + upper lip": 0.0317763015627861
+          }
+        },
+        "pseudo": {
+          "nme": 0.031798552721738815,
+          "nme_median": 0.029578082263469696,
+          "failure_rate": 0.0013333333333333333,
+          "regions": {
+            "Eyebrows": 0.0446772426366806,
+            "Eyes": 0.020871076732873917,
+            "Nose + upper lip": 0.0320914164185524
           }
         }
       }
@@ -541,6 +592,16 @@
             "Eyes": 0.023147305473685265,
             "Nose + upper lip": 0.03520874306559563
           }
+        },
+        "pseudo": {
+          "nme": 0.03632011637091637,
+          "nme_median": 0.03436582162976265,
+          "failure_rate": 0.0,
+          "regions": {
+            "Eyebrows": 0.05369355157017708,
+            "Eyes": 0.022581877186894417,
+            "Nose + upper lip": 0.03521067276597023
+          }
         }
       }
     }
@@ -580,6 +641,11 @@
       "gap": -0.008934656158089638,
       "ci_low": -0.009970777668058872,
       "ci_high": -0.008193371817469597
+    },
+    "pseudo": {
+      "gap": -0.00878007709980011,
+      "ci_low": -0.009809296578168869,
+      "ci_high": -0.008021964691579342
     }
   },
   "comparison": {

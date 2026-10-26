@@ -34,3 +34,10 @@ heatmap,illumination,698,5.152,5.87,0.5186
 heatmap,makeup,206,5.068,6.31,0.5200
 heatmap,occlusion,736,6.553,14.27,0.4133
 heatmap,blur,773,6.112,9.96,0.4398
+pseudo,full,2500,4.989,6.16,0.5254
+pseudo,pose,326,8.609,23.93,0.2422
+pseudo,expression,314,5.333,5.10,0.4941
+pseudo,illumination,698,4.938,5.44,0.5344
+pseudo,makeup,206,4.905,6.80,0.5333
+pseudo,occlusion,736,6.191,13.18,0.4335
+pseudo,blur,773,5.834,9.18,0.4548

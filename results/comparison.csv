@@ -1,6 +1,7 @@
 experiment,label,nme_pct,nme_median_pct,failure_rate_pct,auc,mae_px,gpu_latency_ms,cpu_latency_ms,nme_improvement_vs_baseline_pct,best_epoch,parameters
-baseline,Baseline,7.279,5.621,17.04,0.3850,3.25,7.01,13.96,0.00,58,2980292
-augmented,Augmented (ablation),6.747,5.583,13.24,0.3866,3.07,7.17,13.90,7.31,57,2980292
-proposed,Proposed,6.399,5.376,11.84,0.4076,2.93,7.69,15.02,12.10,60,2980292
-robust,Detector-robust,6.488,5.396,12.08,0.4055,2.96,11.79,20.20,10.86,59,2980292
-heatmap,Heatmap (multi-scale),5.198,4.280,7.00,0.5107,2.34,14.53,28.38,28.60,57,2199458
+baseline,Baseline,7.279,5.621,17.04,0.3850,3.25,12.72,22.76,0.00,58,2980292
+augmented,Augmented (ablation),6.747,5.583,13.24,0.3866,3.07,12.01,21.93,7.31,57,2980292
+proposed,Proposed,6.399,5.376,11.84,0.4076,2.93,11.96,21.88,12.10,60,2980292
+robust,Detector-robust,6.488,5.396,12.08,0.4055,2.96,11.77,21.38,10.86,59,2980292
+heatmap,Heatmap (multi-scale),5.198,4.280,7.00,0.5107,2.34,14.23,29.42,28.60,57,2199458
+pseudo,Heatmap + APAC pseudo-labels,4.989,4.112,6.16,0.5254,2.24,14.38,28.89,31.46,53,2199458
