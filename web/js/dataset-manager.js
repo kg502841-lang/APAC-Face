@@ -252,16 +252,26 @@ class DatasetManager {
     };
   }
 
-  /** Mean distance between two models' 68-point predictions / their inter-ocular distance (not accuracy). */
+  /**
+   * How far apart two models' 68-point predictions are, measured like the error metrics but against the
+   * other model instead of ground truth: disagreement, not accuracy.
+   */
   calculateAgreement(predA, predB) {
     const a = this.mapTo68(predA);
     const b = this.mapTo68(predB);
     if (a.length !== 68 || b.length !== 68) return null;
     const mid = a.map((p, i) => ({ x: (p.x + b[i].x) / 2, y: (p.y + b[i].y) / 2 }));
     const iod = this.calculateInterOcularDistance(mid);
-    let sum = 0;
-    for (let i = 0; i < 68; i++) sum += Math.hypot(a[i].x - b[i].x, a[i].y - b[i].y);
-    return { meanPx: +(sum / 68).toFixed(2), percentOfIod: +(sum / 68 / iod * 100).toFixed(2) };
+    if (!iod || iod <= 0) return null;
+    let sum = 0, max = 0, over = 0;
+    for (let i = 0; i < 68; i++) {
+      const d = Math.hypot(a[i].x - b[i].x, a[i].y - b[i].y);
+      sum += d;
+      if (d > max) max = d;
+      if (d / iod > this.POINT_FAILURE_THRESHOLD) over++;
+    }
+    return { meanPx: +(sum / 68).toFixed(2), percentOfIod: +(sum / 68 / iod * 100).toFixed(2),
+             maxPx: +max.toFixed(2), pointsOverPercent: +(over / 68 * 100).toFixed(1), iodPx: +iod.toFixed(1) };
   }
 }
 

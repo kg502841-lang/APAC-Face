@@ -1395,6 +1395,23 @@ input:checked + .fcf-slider:before {
   padding: 8px 12px;
 }
 .fcf-capture-bar.active { display: flex; }
+
+/* Live measurements under the four metric cards */
+.fcf-live-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: -12px 0 28px;
+  background: var(--faceify-bg-darker); border: 1px solid var(--faceify-border);
+  border-radius: var(--faceify-radius-md); padding: 14px 18px;
+}
+.fcf-live-strip[hidden] { display: none; }
+.fcf-live-strip > div { display: flex; flex-direction: column; gap: 2px; }
+.fcf-live-strip .fcf-metric-label { margin-bottom: 0; }
+.fcf-live-strip strong { font-family: var(--faceify-font-display); font-weight: 400; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.fcf-live-strip small { font-size: 0.74rem; color: var(--faceify-text-muted); }
+.fcf-gt-card .fcf-live-tag {
+  display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; font-size: 0.62rem;
+  background: rgba(239, 68, 68, 0.1); color: var(--faceify-crimson); letter-spacing: 0.06em; vertical-align: middle;
+}
+@media (max-width: 768px) { .fcf-live-strip { grid-template-columns: repeat(2, 1fr); } }
 .fcf-viewport-area.fcf-drop-hover { outline: 2px dashed var(--faceify-cyan); outline-offset: -8px; }
 
 /* Editorial details: serif sub-headings, generous section rhythm, sage focus and checkboxes */

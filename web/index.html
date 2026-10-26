@@ -420,28 +420,36 @@
 
         <div class="fcf-gt-grid">
           <div class="fcf-gt-card">
-            <div class="fcf-metric-label">Mean Euclidean Error</div>
+            <div class="fcf-metric-label" id="fcf-gt-lbl-mean">Mean Euclidean Error</div>
             <div class="fcf-metric-val" id="fcf-gt-mean-error">—</div>
-            <div class="fcf-metric-sub">Mean pixel distance (L2 norm)</div>
+            <div class="fcf-metric-sub" id="fcf-gt-sub-mean">Mean pixel distance (L2 norm)</div>
           </div>
 
           <div class="fcf-gt-card fcf-gt-card-emerald">
-            <div class="fcf-metric-label">Normalized Mean Error (NME)</div>
+            <div class="fcf-metric-label" id="fcf-gt-lbl-nme">Normalized Mean Error (NME)</div>
             <div class="fcf-metric-val" id="fcf-gt-nme" style="color: var(--faceify-cyan);">—</div>
-            <div class="fcf-metric-sub">Normalized by Inter-Ocular Distance</div>
+            <div class="fcf-metric-sub" id="fcf-gt-sub-nme">Normalized by Inter-Ocular Distance</div>
           </div>
 
           <div class="fcf-gt-card">
-            <div class="fcf-metric-label">Maximum Landmark Error</div>
+            <div class="fcf-metric-label" id="fcf-gt-lbl-max">Maximum Landmark Error</div>
             <div class="fcf-metric-val" id="fcf-gt-max-error">—</div>
-            <div class="fcf-metric-sub">Worst-case single point deviation</div>
+            <div class="fcf-metric-sub" id="fcf-gt-sub-max">Worst-case single point deviation</div>
           </div>
 
           <div class="fcf-gt-card">
-            <div class="fcf-metric-label">Failure Rate (&gt;8% NME)</div>
+            <div class="fcf-metric-label" id="fcf-gt-lbl-fail">Failure Rate (&gt;8% NME)</div>
             <div class="fcf-metric-val" id="fcf-gt-failure-rate">—</div>
-            <div class="fcf-metric-sub">Points failing clinical tolerance</div>
+            <div class="fcf-metric-sub" id="fcf-gt-sub-fail">Points failing clinical tolerance</div>
           </div>
+        </div>
+
+        <!-- Live measurements on the current frame (webcam / photos without annotations) -->
+        <div class="fcf-live-strip" id="fcf-live-strip" hidden>
+          <div><span class="fcf-metric-label">Eye distance now</span><strong id="fcf-live-iod">—</strong><small>outer eye corners, px</small></div>
+          <div><span class="fcf-metric-label">Point movement per frame</span><strong id="fcf-live-jitter">—</strong><small>px; on a still face this is jitter</small></div>
+          <div><span class="fcf-metric-label">Face size</span><strong id="fcf-live-face">—</strong><small>landmark box, px</small></div>
+          <div><span class="fcf-metric-label">Frame rate</span><strong id="fcf-live-fps">—</strong><small>both models per second</small></div>
         </div>
 
         <!-- Side-by-side: both models on the same face and the same 68 ground-truth points -->

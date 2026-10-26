@@ -35,6 +35,7 @@
     animFrameId: null,
     isProcessingFrame: false,
     frameCount: 0,
+    live: { fps: null, lastFrameAt: null, prev: null, jitterPx: null },   // per-frame measurements (webcam)
 
     baselineDetector: null,
     apacDetector: null,
@@ -91,6 +92,14 @@
     UI.gtModelLabel = document.getElementById('fcf-gt-model-label');
     UI.gtCompareBody = document.getElementById('fcf-gt-compare-tbody');
     UI.gtCompareSummary = document.getElementById('fcf-gt-compare-summary');
+    UI.gtCards = ['mean', 'nme', 'max', 'fail'].map(k => ({
+      label: document.getElementById(`fcf-gt-lbl-${k}`), sub: document.getElementById(`fcf-gt-sub-${k}`)
+    }));
+    UI.liveStrip = document.getElementById('fcf-live-strip');
+    UI.liveIod = document.getElementById('fcf-live-iod');
+    UI.liveJitter = document.getElementById('fcf-live-jitter');
+    UI.liveFace = document.getElementById('fcf-live-face');
+    UI.liveFps = document.getElementById('fcf-live-fps');
 
     UI.chkShowLandmarks = document.getElementById('fcf-chk-landmarks');
     UI.chkShowMesh = document.getElementById('fcf-chk-mesh');
@@ -266,6 +275,7 @@
       state.webcamStream = null;
     }
     state.isProcessingFrame = false;
+    state.live = { fps: null, lastFrameAt: null, prev: null, jitterPx: null };
     if (state.apacDetector) state.apacDetector.resetTracking();
   }
 
@@ -279,20 +289,16 @@
       if (!state.isProcessingFrame && UI.videoEl.readyState >= 2) {
         state.isProcessingFrame = true;
         try {
-          const wantBaseline = state.compareMode || state.activeModelKey === 'baseline';
-          const wantApac = state.compareMode || state.activeModelKey === 'apac';
-          const needSeed = wantApac && state.apacDetector.needsSeed();
-          let mp = null;
-          if (wantBaseline || needSeed) {
-            mp = await state.baselineDetector.detect(UI.videoEl);
-            state.results.baseline = mp;
-          }
-          if (wantApac) {
-            state.results.apac = await state.apacDetector.detect(UI.videoEl, {
-              mediapipeLandmarks: mp && mp.faceDetected ? mp.landmarks : null,
-              seedChecked: Boolean(mp)
-            });
-          }
+          // Both models run on every frame so they can be compared live. MediaPipe's face location is
+          // handed to APAC-Face only when its tracker asks for one (start, re-check every N frames).
+          const needSeed = state.apacDetector.needsSeed();
+          const mp = await state.baselineDetector.detect(UI.videoEl);
+          state.results.baseline = mp;
+          state.results.apac = await state.apacDetector.detect(UI.videoEl, {
+            mediapipeLandmarks: needSeed && mp.faceDetected ? mp.landmarks : null,
+            seedChecked: needSeed
+          });
+          updateLiveMeasurements();
           if (state.compareMode) {
             renderCanvas(UI.canvasCompareBaseline, UI.videoEl, landmarksOf('baseline'), null, null, 'baseline');
             renderCanvas(UI.canvasCompareApac, UI.videoEl, landmarksOf('apac'), null, null, 'apac');
@@ -302,7 +308,7 @@
           const active = state.results[state.activeModelKey];
           if (active) updateLiveMetrics(active);
           state.frameCount++;
-          if (state.frameCount % 10 === 0) {
+          if (state.frameCount % 5 === 0) {
             updateGroundTruthDisplay();
             if (active) updateCoordinatesTable(active.landmarks);
           }
@@ -551,9 +557,34 @@
     const m = state.metrics[key];
     if (UI.gtModelLabel) UI.gtModelLabel.textContent = MODEL_LABEL[key];
 
-    if (!m) {
+    const other = key === 'apac' ? 'baseline' : 'apac';
+    const agree = !m && !state.currentGroundTruth
+      ? state.datasetManager.calculateAgreement(landmarksOf(key), landmarksOf(other)) : null;
+    if (UI.liveStrip) UI.liveStrip.hidden = !(state.activeSource === 'webcam' && !state.currentGroundTruth);
+
+    if (agree) {
+      // No annotations on this frame: the same four measures, but between the two models (not error)
+      const live = state.activeSource === 'webcam';
+      setCardText([
+        [`Mean distance to ${MODEL_LABEL[other]}`, benchmarkLine(key, 'mean')],
+        ["Normalised distance (% of eye distance)", benchmarkLine(key, 'nme')],
+        ["Largest single-point distance", "Worst point between the two models"],
+        ["Points more than 8% apart", benchmarkLine(key, 'fail')]
+      ], live);
+      UI.gtStatusNotice.textContent = `${live ? "Live webcam" : "This photo"}: no annotated landmarks, so true error cannot be measured. ` +
+        `The cards show how far ${MODEL_LABEL[key]}'s points are from ${MODEL_LABEL[other]}'s on this ${live ? "frame" : "image"} ` +
+        "(disagreement, not error). The small print under each card is the model's measured error on the WFLW benchmark.";
+      UI.gtStatusNotice.className = "fcf-badge fcf-badge-amber";
+      UI.gtMeanError.textContent = `${agree.meanPx.toFixed(2)} px`;
+      UI.gtNme.textContent = `${agree.percentOfIod.toFixed(2)}%`;
+      UI.gtMaxError.textContent = `${agree.maxPx.toFixed(2)} px`;
+      UI.gtFailureRate.textContent = `${agree.pointsOverPercent.toFixed(1)}%`;
+      UI.gtPointsCompared.textContent = "68";
+      UI.gtFormulaDetails.textContent = `Distances between the two models' 68 points, normalised by their mean eye distance (${agree.iodPx} px). Not an error: neither model is ground truth.`;
+    } else if (!m) {
+      setCardText(null, false);
       const why = state.activeSource === 'webcam'
-        ? "Live webcam frames have no ground-truth annotations, so no error can be measured on them. Below: the errors both models made on the 2,500-face WFLW benchmark, and how far apart the two models are right now."
+        ? "Waiting for both models to find a face in the webcam frame ..."
         : (state.currentGroundTruth
            ? "No face was found by this model, so its error cannot be computed."
            : "This photo has no ground-truth annotations. Load a WFLW benchmark face below (real manual annotations) or upload an annotation file for your photo.");
@@ -566,6 +597,7 @@
       UI.gtPointsCompared.textContent = "0";
       UI.gtFormulaDetails.textContent = "NME = (1/N) × Σ (||p_i − g_i||₂ / d_ocular) × 100%. Requires real ground-truth coordinates.";
     } else {
+      setCardText(null, false);
       UI.gtStatusNotice.textContent = `Ground truth: ${state.currentGroundTruth.source}. ${m.pointsCompared} points compared (68-point layout).`;
       UI.gtStatusNotice.className = "fcf-badge fcf-badge-emerald";
       UI.gtMeanError.textContent = `${m.meanErrorPx} px`;
@@ -576,6 +608,67 @@
       UI.gtFormulaDetails.textContent = `Inter-ocular distance (outer eye corners): ${m.iodPx} px. Failure: a point whose error exceeds 8% of it. Computed from the actual predicted and annotated coordinates.`;
     }
     updateComparisonPanel();
+  }
+
+  const CARD_DEFAULTS = [
+    ["Mean Euclidean Error", "Mean pixel distance (L2 norm)"],
+    ["Normalized Mean Error (NME)", "Normalized by Inter-Ocular Distance"],
+    ["Maximum Landmark Error", "Worst-case single point deviation"],
+    ["Failure Rate (>8% NME)", "Points failing clinical tolerance"]
+  ];
+
+  /** Card titles and captions: the ground-truth wording by default, or the live-comparison wording. */
+  function setCardText(texts, live) {
+    if (!UI.gtCards) return;
+    (texts || CARD_DEFAULTS).forEach(([label, sub], i) => {
+      const c = UI.gtCards[i];
+      if (!c.label) return;
+      c.label.textContent = label;
+      if (live) c.label.insertAdjacentHTML('beforeend', '<span class="fcf-live-tag">LIVE</span>');
+      c.sub.textContent = sub;
+    });
+  }
+
+  /** The model's measured benchmark error, for context under a live card. */
+  function benchmarkLine(key, metric) {
+    const bm = state.benchmark && state.benchmark.mediapipe;
+    if (!bm) return "";
+    const web = state.benchmark.web_model || 'proposed';
+    const d = (key === 'baseline' ? bm.methods.mediapipe : (bm.methods[`${web}_mp_located`] || bm.methods[web])).detected_faces;
+    if (metric === 'mean') return `Benchmark error of this model: ${d.mean_error_px.toFixed(2)} px`;
+    if (metric === 'nme') return `Benchmark NME of this model: ${(d.nme * 100).toFixed(2)}%`;
+    return `Benchmark: ${(d.point_failure_rate * 100).toFixed(1)}% of its points fail (>8%)`;
+  }
+
+  /** Per-frame facts that need no ground truth: eye distance, face size, jitter, frame rate. */
+  function updateLiveMeasurements() {
+    const now = performance.now();
+    const L = state.live;
+    if (L.lastFrameAt !== null) {
+      const fps = 1000 / Math.max(now - L.lastFrameAt, 1);
+      L.fps = L.fps === null ? fps : 0.9 * L.fps + 0.1 * fps;
+    }
+    L.lastFrameAt = now;
+    const pts = landmarksOf(state.activeModelKey);
+    const p68 = pts.length ? state.datasetManager.mapTo68(pts) : [];
+    if (p68.length === 68) {
+      if (L.prev) {
+        let s = 0;
+        for (let i = 0; i < 68; i++) s += Math.hypot(p68[i].x - L.prev[i].x, p68[i].y - L.prev[i].y);
+        L.jitterPx = L.jitterPx === null ? s / 68 : 0.8 * L.jitterPx + 0.2 * (s / 68);
+      }
+      L.prev = p68;
+      L.iodPx = state.datasetManager.calculateInterOcularDistance(p68);
+      const xs = p68.map(p => p.x), ys = p68.map(p => p.y);
+      L.facePx = [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)];
+    } else {
+      L.prev = null; L.jitterPx = null; L.iodPx = null; L.facePx = null;
+    }
+    if (state.frameCount % 5 !== 0 || !UI.liveIod) return;
+    UI.liveIod.textContent = L.iodPx ? `${L.iodPx.toFixed(1)} px` : "—";
+    UI.liveJitter.textContent = L.jitterPx !== null ? `${L.jitterPx.toFixed(2)} px` : "—";
+    UI.liveFace.textContent = L.facePx ? `${Math.round(L.facePx[0])} × ${Math.round(L.facePx[1])}` : "—";
+    UI.liveFps.textContent = L.fps ? `${L.fps.toFixed(1)} fps` : "—";
   }
 
   function updateComparisonPanel() {
