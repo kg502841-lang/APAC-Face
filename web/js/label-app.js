@@ -12,6 +12,7 @@
 
   const N = 68;
   const PRIORITY_GROUPS = ["East_Asian", "Southeast_Asian", "Indian", "White"];
+  const PROOF_GROUPS = ["Indian", "Southeast_Asian"];   // no public hand-labelled landmarks exist for these
   const CHAINS = [  // [first, last, closed]
     [0, 16, false], [17, 21, false], [22, 26, false], [27, 30, false], [31, 35, false],
     [36, 41, true], [42, 47, true], [48, 59, true], [60, 67, true]
@@ -130,7 +131,8 @@
     if (mode === "mine") pool = items.filter((it) => S.mine[it.id]);
     else if (mode === "second") pool = items.filter((it) => (S.labelledBy[it.id] || []).some((a) => a !== S.annotator) && !S.mine[it.id]);
     else {
-      const groups = mode === "priority" ? PRIORITY_GROUPS : [...new Set(items.map((it) => it.group))];
+      const groups = mode === "priority" ? PRIORITY_GROUPS
+        : mode === "proof" ? PROOF_GROUPS : [...new Set(items.map((it) => it.group))];
       pool = items.filter((it) => groups.includes(it.group) && !S.mine[it.id] && !(S.labelledBy[it.id] || []).length);
     }
     // interleave groups so every group fills up at the same pace
@@ -165,13 +167,17 @@
     S.pos = Math.max(0, Math.min(pos, S.queue.length - 1));
     const it = S.item = S.queue[S.pos];
     const saved = S.mine[it.id];
-    S.init = it.init.map((p) => [p[0], p[1]]);
+    // Starting shape: MediaPipe's corrected points when chosen and available, otherwise the mean face.
+    // A face labelled before keeps the start it was labelled from.
+    const useMp = saved ? saved.start === "mediapipe" && it.init_mp : S.startShape === "mediapipe" && it.init_mp;
+    S.start = useMp ? "mediapipe" : "mean_shape";
+    S.init = (useMp ? it.init_mp : it.init).map((p) => [p[0], p[1]]);
     S.points = saved && saved.points ? saved.points.map((p) => [p[0], p[1]]) : S.init.map((p) => [p[0], p[1]]);
     S.occluded = saved && saved.occluded ? saved.occluded.slice() : new Array(N).fill(false);
     S.undo = []; S.current = 0; S.dirty = false;
     S.elapsed = saved ? saved.seconds || 0 : 0; S.started = performance.now();
     $("lbl-face-group").textContent = it.group_label;
-    $("lbl-face-count").textContent = `Face ${S.pos + 1} of ${S.queue.length} · ${it.id}${saved ? (saved.skipped ? " · skipped before" : " · saved before") : ""}`;
+    $("lbl-face-count").textContent = `Face ${S.pos + 1} of ${S.queue.length} · ${it.id} · starts from ${S.start === "mediapipe" ? "MediaPipe" : "average face"}${saved ? (saved.skipped ? " · skipped before" : " · saved before") : ""}`;
     const img = new Image();
     img.onload = () => { S.img = img; fit(); updatePanel(); };
     img.onerror = () => status(`Image ${it.file} not found - re-run python -m src.apac_labels prepare`, "error");
@@ -357,9 +363,10 @@
   async function save(skipped) {
     const it = S.item;
     if (!it) return false;
-    if (!skipped && movedCount() < 40 &&
+    const minMoved = S.start === "mediapipe" ? 10 : 40;   // MediaPipe starts need fewer corrections, but rarely none
+    if (!skipped && movedCount() < minMoved &&
         !confirm(`Only ${movedCount()} of 68 points were moved from the starting shape. Every point should be checked. Save anyway?`)) return false;
-    const label = { id: it.id, annotator: S.annotator, skipped, seconds: seconds() };
+    const label = { id: it.id, annotator: S.annotator, skipped, seconds: seconds(), start: S.start };
     if (skipped) label.skip_reason = $("lbl-skip-reason").value;
     else Object.assign(label, { points: S.points.map((p) => [+p[0].toFixed(2), +p[1].toFixed(2)]), occluded: S.occluded, moved: movedCount() });
     if (S.server) {
@@ -471,6 +478,7 @@
     S.annotator = name;
     try { localStorage.setItem(NAME_KEY, name); } catch (e) { /* private mode */ }
     await loadSaved();
+    S.startShape = $("lbl-startshape").value;
     S.queue = buildQueue($("lbl-queue").value);
     renderProgress();
     $("lbl-workspace").hidden = false;

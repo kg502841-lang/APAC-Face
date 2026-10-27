@@ -16,6 +16,7 @@
   background: var(--faceify-bg-primary); border: 1px solid var(--faceify-border);
   border-radius: var(--faceify-radius-sm); padding: 9px 12px;
 }
+.lbl-start-note { flex-basis: 100%; margin: 0; font-size: 0.8rem; color: var(--faceify-text-muted); max-width: 900px; }
 .lbl-server-note {
   flex-basis: 100%; font-size: 0.85rem; color: #6E4509;
   background: rgba(161, 102, 15, 0.07); border: 1px solid rgba(161, 102, 15, 0.3);

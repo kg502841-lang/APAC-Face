@@ -49,6 +49,13 @@ LABELING_WEB_DIR = "labeling"            # inside paths.web
 ANNOTATOR_RE = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
 ID_RE = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
 SKIP_REASONS = ("no_face", "multiple_faces", "too_occluded", "too_blurry", "not_a_photo", "other")
+# Where a face's points start in the labelling tool. "mean_shape" is neutral; "mediapipe" (its 68 points with the
+# labelling-style offset removed) is about twice as fast to correct, and any anchoring it causes favours
+# MediaPipe, so a win for APAC-Face measured on such labels is conservative. Every label records its start.
+START_SOURCES = ("mean_shape", "mediapipe")
+# An average face matches almost no real face, so a label that started there with few points moved was not
+# finished (e.g. saved by accident). Such labels are left out of the evaluation and counted.
+MIN_MOVED_FROM_MEAN = 50
 
 
 # ----------------------------------------------------------------------------------------------- prepare
@@ -127,6 +134,30 @@ def prepare(cfg: dict[str, Any], source: str, per_group: int, seed: int, groups:
     return web / "manifest.json"
 
 
+def add_mediapipe_starts(cfg: dict[str, Any]) -> int:
+    """Store MediaPipe's offset-corrected 68 points as an optional starting shape for every manifest face
+    (`init_mp`, null where MediaPipe finds no face). Faces and ids are unchanged, so existing labels stay valid."""
+    from .mediapipe_baseline import MediaPipeLandmarker, apply_offset
+
+    web = resolve_path(cfg["paths"]["web"]) / LABELING_WEB_DIR
+    manifest = load_manifest(cfg)
+    calib = load_json(resolve_path(cfg["paths"]["checkpoints"]) / "mediapipe_calibration.json")
+    offset = np.asarray(calib["offset_68"], np.float32)
+    landmarker = MediaPipeLandmarker(cfg["paths"]["mediapipe_model"])
+    found = 0
+    for it in manifest["items"]:
+        mesh = landmarker.detect(decode_image((web / it["file"]).read_bytes()))
+        if mesh is None:
+            it["init_mp"] = None
+            continue
+        it["init_mp"] = apply_offset(to_68(mesh, "mediapipe").astype(np.float32)[None], offset)[0].round(2).tolist()
+        found += 1
+    landmarker.close()
+    manifest["start_sources"] = list(START_SOURCES)
+    save_json(manifest, web / "manifest.json")
+    return found
+
+
 # ------------------------------------------------------------------------------------------ label files
 
 def validate_label(label: dict[str, Any], manifest_ids: set[str]) -> dict[str, Any]:
@@ -138,9 +169,11 @@ def validate_label(label: dict[str, Any], manifest_ids: set[str]) -> dict[str, A
     if not ID_RE.match(item_id) or item_id not in manifest_ids:
         raise ValueError(f"unknown image id {item_id!r}")
     skipped = bool(label.get("skipped", False))
+    start = str(label.get("start", "mean_shape"))
     out = {"id": item_id, "annotator": annotator, "skipped": skipped,
            "saved": time.strftime("%Y-%m-%d %H:%M:%S"),
-           "seconds": float(label.get("seconds", 0) or 0)}
+           "seconds": float(label.get("seconds", 0) or 0),
+           "start": start if start in START_SOURCES else "mean_shape"}
     if skipped:
         reason = str(label.get("skip_reason", "other"))
         out["skip_reason"] = reason if reason in SKIP_REASONS else "other"
@@ -234,7 +267,7 @@ def evaluate(cfg: dict[str, Any], annotator: str | None, device: str = "auto") -
     landmarker = MediaPipeLandmarker(cfg["paths"]["mediapipe_model"])
 
     rows: list[dict[str, Any]] = []
-    gts, grp, mp_found = [], [], []
+    gts, grp, mp_found, starts, incomplete = [], [], [], [], []
     preds: dict[str, list[np.ndarray]] = defaultdict(list)
     for it in manifest["items"]:
         recs = {a: r for a, r in labels.get(it["id"], {}).items() if not r["skipped"]}
@@ -242,6 +275,9 @@ def evaluate(cfg: dict[str, Any], annotator: str | None, device: str = "auto") -
             continue
         rec = recs.get(annotator) if annotator else recs[sorted(recs)[0]]
         if rec is None:
+            continue
+        if rec.get("start", "mean_shape") == "mean_shape" and rec.get("moved", 0) < MIN_MOVED_FROM_MEAN:
+            incomplete.append(f"{rec['annotator']}/{it['id']} ({rec.get('moved', 0)} points moved)")
             continue
         image = decode_image((web / it["file"]).read_bytes())
         gt = np.asarray(rec["points"], np.float32)
@@ -262,13 +298,17 @@ def evaluate(cfg: dict[str, Any], annotator: str | None, device: str = "auto") -
         gts.append(gt)
         grp.append(it["group"])
         mp_found.append(mesh is not None)
+        starts.append(rec.get("start", "mean_shape"))
         rows.append({"id": it["id"], "group": it["group"], "annotator": rec["annotator"],
-                     "mediapipe_found": mesh is not None})
+                     "start": starts[-1], "mediapipe_found": mesh is not None})
     landmarker.close()
+    if incomplete:
+        log.warning("Left out %d unfinished label(s) - redo them in the tool ('Review my saved faces'): %s",
+                    len(incomplete), ", ".join(incomplete))
     if not gts:
-        raise SystemExit("No labelled faces yet - label some in http://127.0.0.1:8080/label.html")
+        raise SystemExit("No finished labels yet - label faces in http://127.0.0.1:8080/label.html")
 
-    gts_a, grp_a, found = np.stack(gts), np.array(grp), np.array(mp_found)
+    gts_a, grp_a, found, start_a = np.stack(gts), np.array(grp), np.array(mp_found), np.array(starts)
     methods = ["mediapipe", "mediapipe_calibrated", *predictors]
     labels_of = {"mediapipe": "Google MediaPipe", "mediapipe_calibrated": "MediaPipe, offset-corrected"}
     labels_of |= {m: cfg["experiments"].get(m, {}).get("label", m) for m in predictors}
@@ -281,6 +321,7 @@ def evaluate(cfg: dict[str, Any], annotator: str | None, device: str = "auto") -
                      "outer-eye-corner distance of the label. APAC-Face is located by MediaPipe's face "
                      "detection like the web app; every method is scored on the faces MediaPipe found."),
         "inter_annotator": inter_annotator(labels), "methods": {m: labels_of[m] for m in methods}, "groups": {},
+        "excluded_unfinished": incomplete,
     }
     scored: dict[str, dict[str, Any]] = {}
     for g in sorted(set(grp_a)):
@@ -295,6 +336,17 @@ def evaluate(cfg: dict[str, Any], annotator: str | None, device: str = "auto") -
             if ref in scored[g] and deployed in scored[g] and ref != deployed:
                 report["groups"][g].setdefault("comparison", {})[f"{deployed}_vs_{ref}"] = paired_bootstrap(
                     scored[g][ref]["_nme"], scored[g][deployed]["_nme"], n_boot, cfg["seed"])
+    # The same per-group NMEs split by starting shape: if a MediaPipe start anchored annotators, MediaPipe
+    # looks better on those labels than on the mean-shape ones.
+    report["by_start"] = {}
+    for s in sorted(set(start_a)):
+        for g in sorted(set(grp_a)):
+            mask = (grp_a == g) & found & (start_a == s)
+            if mask.any():
+                report["by_start"].setdefault(s, {})[g] = {
+                    "faces": int(mask.sum()),
+                    "nme": {m: float(np.nanmean(score(np.stack(preds[m])[mask], gts_a[mask], thr)["_nme"]))
+                            for m in methods}}
     if ref_group in scored:
         report["gap_vs_reference"] = {
             g: {m: scored[g][m]["nme"] - scored[ref_group][m]["nme"] for m in methods}
@@ -327,6 +379,7 @@ def main() -> None:
     p.add_argument("--groups", nargs="*", default=None, help="limit to these groups (default: all)")
     p.add_argument("--force", action="store_true", help="replace an existing manifest")
     sub.add_parser("status", help="labelling progress")
+    sub.add_parser("add-starts", help="add MediaPipe starting shapes to the existing manifest (ids unchanged)")
     e = sub.add_parser("evaluate", help="per-group accuracy against the human labels")
     e.add_argument("--annotator", default=None, help="use this annotator's labels (default: first by name)")
     e.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
@@ -342,6 +395,9 @@ def main() -> None:
         prepare(cfg, args.source or cfg["paths"]["apac_source"], args.per_group, args.seed, args.groups)
     elif args.cmd == "status":
         status(cfg)
+    elif args.cmd == "add-starts":
+        n = add_mediapipe_starts(cfg)
+        log.info("MediaPipe starting shapes added for %d faces (others keep the mean-shape start)", n)
     else:
         report = evaluate(cfg, args.annotator, args.device)
         ia = report["inter_annotator"]
@@ -350,6 +406,13 @@ def main() -> None:
         for g, e in report["groups"].items():
             cells = "  ".join(f"{m} {v['nme'] * 100:.2f}%" for m, v in e["methods"].items())
             log.info("%-18s n=%-3d %s", g, e["faces"], cells)
+            for ref, b in e.get("comparison", {}).items():
+                log.info("    %s: NME drop %.2f pts (95%% CI %.2f to %.2f, p=%.4f)", ref, b["mean_diff"] * 100,
+                         b["ci_low"] * 100, b["ci_high"] * 100, b["p_value"])
+        for s, groups in report["by_start"].items():
+            log.info("labels started from %s: %s", s, "  ".join(
+                f"{g} n={v['faces']} deployed {v['nme'][report['deployed_model']] * 100:.2f}% vs MediaPipe "
+                f"{v['nme']['mediapipe'] * 100:.2f}%" for g, v in groups.items()))
         log.info("Wrote results/apac_labelled_accuracy.json and apac_labelled_per_face.csv")
 
 

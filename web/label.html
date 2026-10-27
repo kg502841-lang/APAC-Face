@@ -55,13 +55,26 @@
       <div class="lbl-field">
         <label for="lbl-queue">Faces to label</label>
         <select id="lbl-queue">
-          <option value="priority">APAC groups + White reference (priority)</option>
+          <option value="proof">Proof set: South Asian + Southeast Asian (100 faces)</option>
+          <option value="priority">APAC groups + White reference</option>
           <option value="all">All groups</option>
           <option value="second">Second opinion: faces someone else labelled</option>
           <option value="mine">Review my saved faces</option>
         </select>
       </div>
+      <div class="lbl-field">
+        <label for="lbl-startshape">Points start from</label>
+        <select id="lbl-startshape">
+          <option value="mediapipe">MediaPipe's points: correct them (about 2x faster)</option>
+          <option value="mean_shape">An average face: place every point (neutral)</option>
+        </select>
+      </div>
       <button class="fcf-btn fcf-btn-primary" id="lbl-start">Start labelling</button>
+      <p class="lbl-start-note">
+        Starting from MediaPipe's points can nudge you towards keeping them, which helps MediaPipe, never APAC-Face.
+        So a win for APAC-Face on these labels is a conservative result. Still check and move <em>every</em>
+        point that is not exactly right. Each saved face records which start it used.
+      </p>
       <div class="lbl-server-note" id="lbl-server-note" hidden></div>
     </section>
 

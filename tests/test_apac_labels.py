@@ -26,6 +26,12 @@ def test_validate_accepts_a_full_label_and_a_skip():
     assert skip["skipped"] and skip["skip_reason"] == "other" and "points" not in skip
 
 
+def test_start_shape_is_recorded_and_unknown_starts_fall_back():
+    assert validate_label(label(start="mediapipe"), IDS)["start"] == "mediapipe"
+    assert validate_label(label(), IDS)["start"] == "mean_shape"
+    assert validate_label(label(start="our_model"), IDS)["start"] == "mean_shape"   # never a model-of-ours start
+
+
 @pytest.mark.parametrize("bad", [
     {"annotator": "../etc"}, {"annotator": ""}, {"id": "../../x"}, {"id": "999_Unknown"},
     {"points": [[1, 2]] * 67}, {"points": [[1, float("nan")]] * 68}, {"occluded": [False] * 3},

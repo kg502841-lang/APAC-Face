@@ -612,13 +612,23 @@ python -m src.apac_labels evaluate                 # accuracy per group vs the h
 ```
 
 - **68 points per face** (iBUG layout: the 68 points every comparison here is scored on).
-- **Neutral starting shape.** Each face starts from the mean WFLW training face, placed in a box around the face
-  (the box comes from MediaPipe's face location, or the image centre if it finds no face). No model's landmark
-  prediction is ever shown, so the labels do not lean towards APAC-Face or MediaPipe.
+- **Two starting shapes, never our model's.**
+  - *Average face* (neutral): the mean WFLW training face, placed in a box around the face (from MediaPipe's
+    face location, or the image centre if it finds no face). Every point has to be placed.
+  - *MediaPipe's points* (default, about 2x faster): MediaPipe's 68 points with its labelling-style offset
+    removed (`python -m src.apac_labels add-starts`; available for 309 of the 350 faces). Annotators correct
+    them. Any anchoring this causes favours MediaPipe, so a win for APAC-Face on these labels is conservative.
+  - Every saved face records its start. `evaluate` reports results separately per start, so an anchoring effect
+    would show up as MediaPipe doing better on MediaPipe-started labels.
+  - An APAC-Face prediction is never used as a start: that would bias the test towards the model being tested.
+- **Unfinished labels are left out:** an average-face label with fewer than 50 of its 68 points moved was not
+  finished. `evaluate` skips it, names it, and asks for it to be redone.
+- **Why hand labels:** no public dataset has hand-placed landmarks on South or Southeast Asian faces (SCUT-FBP5500
+  covers East Asian faces only), so these labels are the only valid way to measure accuracy for those groups.
 - **Tool:** click to place the highlighted point (the next one is then highlighted), drag to correct, zoom and
   pan, a 4x magnifier while dragging, a reference diagram and written instructions for every point, "hidden
-  point" flags, undo, skip with a reason, and a timer. The default queue interleaves East Asian, Southeast Asian,
-  South Asian and the White reference group so all four fill up together.
+  point" flags, undo, skip with a reason, and a timer. The default **proof queue** holds the 100 South Asian and
+  Southeast Asian faces, interleaved. Another queue adds East Asian and the White reference group.
 - **Storage:** `src/serve_web.py` saves each face to `data/apac_labels/<annotator>/<id>.json` (git-ignored, like
   all dataset files). If the page is served without it, labels stay in the browser and can be downloaded.
 - **Second opinions:** the "Second opinion" queue shows faces another annotator labelled. `evaluate` reports
