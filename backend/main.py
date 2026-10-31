@@ -24,6 +24,7 @@ from typing import Any
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from src import __version__
@@ -128,6 +129,12 @@ def _run(predictor: LandmarkPredictor, image: np.ndarray, return_image: bool, dr
         out["annotated_png_base64"] = base64.b64encode(
             encode_png(annotate(image, pred, draw_mesh=draw_mesh))).decode("ascii")
     return out
+
+
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    """The bare address opens the interactive API docs instead of a 404."""
+    return RedirectResponse("/docs")
 
 
 @app.get("/health")
