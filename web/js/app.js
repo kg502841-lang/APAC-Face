@@ -561,6 +561,9 @@
     const agree = !m && !state.currentGroundTruth
       ? state.datasetManager.calculateAgreement(landmarksOf(key), landmarksOf(other)) : null;
     if (UI.liveStrip) UI.liveStrip.hidden = !(state.activeSource === 'webcam' && !state.currentGroundTruth);
+    // The live comparison cards label themselves (LIVE tags, "distance to ..." titles, formula note), so
+    // the banner above them is only shown for ground truth and waiting states.
+    UI.gtStatusNotice.parentElement.hidden = Boolean(agree);
 
     if (agree) {
       // No annotations on this frame: the same four measures, but between the two models (not error)
@@ -571,10 +574,6 @@
         ["Largest single-point distance", "Worst point between the two models"],
         ["Points more than 8% apart", benchmarkLine(key, 'fail')]
       ], live);
-      UI.gtStatusNotice.textContent = `${live ? "Live webcam" : "This photo"}: no annotated landmarks, so true error cannot be measured. ` +
-        `The cards show how far ${MODEL_LABEL[key]}'s points are from ${MODEL_LABEL[other]}'s on this ${live ? "frame" : "image"} ` +
-        "(disagreement, not error). The small print under each card is the model's measured error on the WFLW benchmark.";
-      UI.gtStatusNotice.className = "fcf-badge fcf-badge-amber";
       UI.gtMeanError.textContent = `${agree.meanPx.toFixed(2)} px`;
       UI.gtNme.textContent = `${agree.percentOfIod.toFixed(2)}%`;
       UI.gtMaxError.textContent = `${agree.maxPx.toFixed(2)} px`;

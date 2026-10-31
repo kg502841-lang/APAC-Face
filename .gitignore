@@ -35,6 +35,7 @@ web/labeling/
 
 # Editors / OS / local tooling
 .claude/
+.launch-config/
 .vscode/
 .idea/
 .DS_Store
